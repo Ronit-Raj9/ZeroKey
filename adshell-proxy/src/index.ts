@@ -285,29 +285,49 @@ setInterval(() => {
 
 const app = new Hono()
 
-app.use("*", cors())
-app.use(
-  paymentMiddleware(
-    {
-      "POST /v1/chat/completions": {
-        accepts: [
-          {
-            scheme: "exact",
-            price: `$${env.rewardUsdc}`,
-            network: env.network,
-            payTo:
-              env.payTo ||
-              sponsorAccount?.address ||
-              "0x0000000000000000000000000000000000000000",
+const x402Middleware = paymentMiddleware(
+  {
+    "POST /v1/chat/completions": {
+      accepts: [
+        {
+          scheme: "exact",
+          price: {
+            amount: parseUnits(env.rewardUsdc, 6).toString(),
+            asset: env.usdcAddress,
+            extra: { name: "USD Coin", version: "2" },
           },
-        ],
-        description: "AdShell AI chat completion",
-        mimeType: "text/event-stream",
-      },
+          network: env.network,
+          payTo:
+            env.payTo ||
+            sponsorAccount?.address ||
+            "0x0000000000000000000000000000000000000000",
+        },
+      ],
+      description: "AdShell AI chat completion",
+      mimeType: "text/event-stream",
     },
-    resourceServer,
-  ),
+  },
+  resourceServer,
 )
+
+app.use("*", async (c, next) => {
+  try {
+    return await x402Middleware(c, next)
+
+  } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+    console.error("x402 middleware error:", msg)
+    // If this is not the payment-gated route, skip the middleware
+    if (c.req.method !== "POST" || !c.req.path.endsWith("/v1/chat/completions")) {
+      return next()
+    }
+    return c.json(
+      { error: "Payment processing unavailable", detail: msg },
+      502,
+    )
+  }
+    
+})
 
 // ──────────────────────────────────────────────
 //  GET /health — Enhanced with on-chain stats
