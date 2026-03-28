@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdShell — 6-Hour Hackathon Build Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep:    #090d12;
+    --bg-panel:   #0e1520;
+    --bg-card:    #121c2a;
+    --bg-code:    #0a1018;
+    --border:     #1e2d42;
+    --border-hi:  #2a4060;
+    --green:      #00e5a0;
+    --green-dim:  #00b87c;
+    --cyan:       #00c8ff;
+    --cyan-dim:   #0098cc;
+    --amber:      #ffb830;
+    --amber-dim:  #cc8a00;
+    --red:        #ff4d6a;
+    --purple:     #a78bfa;
+    --text-1:     #e2eaf5;
+    --text-2:     #8aa0bc;
+    --text-3:     #4e6580;
+    --font-head:  'Syne', sans-serif;
+    --font-body:  'DM Sans', sans-serif;
+    --font-mono:  'Space Mono', monospace;
+    --radius:     10px;
+    --glow-g:     0 0 30px rgba(0,229,160,0.12);
+    --glow-c:     0 0 30px rgba(0,200,255,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-1);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SIDEBAR NAV ── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .sidebar-logo .logo-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-logo h1 {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-1);
+    line-height: 1.1;
+  }
+
+  .sidebar-logo .badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 10px;
+    background: rgba(0,229,160,0.12);
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+  }
+
+  .nav-section {
+    padding: 6px 24px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 24px;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-link:hover {
+    color: var(--green);
+    background: rgba(0,229,160,0.05);
+    border-left-color: var(--green);
+  }
+
+  .nav-link .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-hi);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .nav-link:hover .dot { background: var(--green); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    margin-left: 240px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0a1520 0%, #0d1f10 50%, #0a1520 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 80px 64px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: -100px; top: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--green);
+  }
+
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.0;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e2eaf5 0%, #00e5a0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text-2);
+    max-width: 580px;
+    margin-bottom: 36px;
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  .hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .chip-green  { background: rgba(0,229,160,0.1);  border: 1px solid rgba(0,229,160,0.3);  color: var(--green); }
+  .chip-cyan   { background: rgba(0,200,255,0.1);  border: 1px solid rgba(0,200,255,0.3);  color: var(--cyan); }
+  .chip-amber  { background: rgba(255,184,48,0.1); border: 1px solid rgba(255,184,48,0.3); color: var(--amber); }
+  .chip-purple { background: rgba(167,139,250,0.1);border: 1px solid rgba(167,139,250,0.3);color: var(--purple);}
+
+  /* ── SECTIONS ── */
+  .content {
+    padding: 0 64px 80px;
+  }
+
+  .section {
+    padding: 56px 0 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  .section h2 {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .section p, .section li {
+    color: var(--text-2);
+    line-height: 1.75;
+  }
+
+  .section > p {
+    max-width: 780px;
+    margin-bottom: 24px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .card-green { border-left: 3px solid var(--green); }
+  .card-cyan  { border-left: 3px solid var(--cyan); }
+  .card-amber { border-left: 3px solid var(--amber); }
+  .card-red   { border-left: 3px solid var(--red); }
+  .card-purple{ border-left: 3px solid var(--purple); }
+
+  .card h3 {
+    font-family: var(--font-head);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── BULLET LISTS ── */
+  .bullets {
+    list-style: none;
+    padding: 0;
+  }
+
+  .bullets li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(30,45,66,0.6);
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  .bullets li:last-child { border-bottom: none; }
+
+  .bullets li::before {
+    content: '▸';
+    color: var(--green);
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .bullets li strong { color: var(--text-1); font-weight: 500; }
+
+  .bullets.cyan li::before { color: var(--cyan); }
+  .bullets.amber li::before { color: var(--amber); }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--green), var(--cyan), var(--amber));
+    border-radius: 2px;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 28px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -21px; top: 6px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    background: var(--bg-deep);
+    box-shadow: 0 0 10px rgba(0,229,160,0.4);
+  }
+
+  .timeline-item:nth-child(2)::before { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,200,255,0.4); }
+  .timeline-item:nth-child(3)::before { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,200,255,0.4); }
+  .timeline-item:nth-child(4)::before { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,184,48,0.4); }
+  .timeline-item:nth-child(5)::before { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,184,48,0.4); }
+  .timeline-item:nth-child(6)::before { border-color: var(--purple); box-shadow: 0 0 10px rgba(167,139,250,0.4); }
+
+  .timeline-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .timeline-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--green);
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 4px;
+    padding: 3px 10px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .timeline-title {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .timeline-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #8ab4d8;
+    margin: 16px 0;
+    position: relative;
+  }
+
+  pre .c  { color: var(--text-3); }        /* comments */
+  pre .kw { color: var(--purple); }        /* keywords */
+  pre .s  { color: var(--amber); }         /* strings */
+  pre .n  { color: var(--green); }         /* numbers / addresses */
+  pre .fn { color: var(--cyan); }          /* functions */
+  pre .t  { color: #ff9070; }              /* types */
+  pre .op { color: var(--text-2); }        /* operators */
+
+  .code-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 40px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 2.0;
+    color: #6a88aa;
+    overflow-x: auto;
+    margin: 20px 0;
+  }
+
+  .arch-diagram .g  { color: var(--green); }
+  .arch-diagram .c  { color: var(--cyan); }
+  .arch-diagram .a  { color: var(--amber); }
+  .arch-diagram .p  { color: var(--purple); }
+  .arch-diagram .w  { color: var(--text-1); font-weight: 700; }
+  .arch-diagram .d  { color: var(--text-3); }
+
+  /* ── TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13.5px;
+  }
+
+  .data-table th {
+    background: rgba(0,229,160,0.07);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-hi);
+    font-weight: 700;
+  }
+
+  .data-table td {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .data-table td strong { color: var(--text-1); font-weight: 500; }
+  .data-table td code {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--cyan);
+    background: rgba(0,200,255,0.08);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .ok   { color: var(--green); font-weight: 700; }
+  .warn { color: var(--amber); font-weight: 700; }
+  .no   { color: var(--red);   font-weight: 700; }
+
+  /* ── GRID CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .mini-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+  }
+
+  .mini-card .icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .mini-card h4 {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 8px;
+  }
+
+  .mini-card p {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+
+  /* ── ECON FLOW ── */
+  .flow-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+
+  .flow-node {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    min-width: 150px;
+    flex: 1;
+    text-align: center;
+  }
+
+  .flow-node .fn-icon { font-size: 24px; margin-bottom: 6px; }
+  .flow-node .fn-label {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 4px;
+  }
+  .flow-node .fn-detail { font-size: 11.5px; color: var(--text-3); }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    color: var(--green);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: rgba(0,229,160,0.05);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 20px 0;
+  }
+
+  .callout-amber {
+    background: rgba(255,184,48,0.05);
+    border-color: rgba(255,184,48,0.25);
+  }
+
+  .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { font-size: 13.5px; color: var(--text-2); line-height: 1.65; }
+  .callout-body strong { color: var(--text-1); }
+
+  /* ── PITCH BOX ── */
+  .pitch-box {
+    background: linear-gradient(135deg, rgba(0,229,160,0.07), rgba(0,200,255,0.07));
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 12px;
+    padding: 36px 40px;
+    margin-top: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pitch-box::before {
+    content: '"';
+    position: absolute;
+    top: -20px; left: 20px;
+    font-family: var(--font-head);
+    font-size: 160px;
+    font-weight: 800;
+    color: rgba(0,229,160,0.05);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .pitch-box p {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-1);
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+  }
+
+  .pitch-box p em { color: var(--green); font-style: normal; }
+
+  /* ── SKIP LIST ── */
+  .skip-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .skip-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--text-3);
+    border-bottom: 1px solid rgba(30,45,66,0.4);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,77,106,0.4);
+  }
+
+  .skip-list li::before {
+    content: '✕';
+    color: var(--red);
+    opacity: 0.6;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    text-decoration: none;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .hero, .content { padding-left: 24px; padding-right: 24px; }
+    .hero h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-tag">BUILD PLAN</div>
+    <h1>AdShell</h1>
+    <span class="badge">v0.1 MVP · 6HRS</span>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <a class="nav-link" href="#overview"><span class="dot"></span>What is AdShell</a>
+  <a class="nav-link" href="#problem"><span class="dot"></span>Problem & Solution</a>
+  <a class="nav-link" href="#economics"><span class="dot"></span>Economic Model</a>
+  <a class="nav-link" href="#stakeholders"><span class="dot"></span>Stakeholders</a>
+
+  <div class="nav-section">Architecture</div>
+  <a class="nav-link" href="#systems"><span class="dot"></span>System Overview</a>
+  <a class="nav-link" href="#contracts"><span class="dot"></span>Smart Contracts</a>
+  <a class="nav-link" href="#dataflow"><span class="dot"></span>Data Flow</a>
+  <a class="nav-link" href="#tech"><span class="dot"></span>Tech Stack</a>
+
+  <div class="nav-section">Build Plan</div>
+  <a class="nav-link" href="#phase0"><span class="dot"></span>Phase 0 · Setup</a>
+  <a class="nav-link" href="#phase1"><span class="dot"></span>Phase 1 · Contract</a>
+  <a class="nav-link" href="#phase2"><span class="dot"></span>Phase 2 · AI Proxy</a>
+  <a class="nav-link" href="#phase3"><span class="dot"></span>Phase 3 · Ad Server</a>
+  <a class="nav-link" href="#phase4"><span class="dot"></span>Phase 4 · CLI</a>
+  <a class="nav-link" href="#phase5"><span class="dot"></span>Phase 5 · Wire Loop</a>
+  <a class="nav-link" href="#phase6"><span class="dot"></span>Phase 6 · Demo</a>
+
+  <div class="nav-section">Reference</div>
+  <a class="nav-link" href="#chain"><span class="dot"></span>Why Monad</a>
+  <a class="nav-link" href="#skip"><span class="dot"></span>What to Skip</a>
+  <a class="nav-link" href="#pitch"><span class="dot"></span>Pitch One-Liner</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Hackathon Build Plan · Monad Blitz</div>
+    <h1>AdShell</h1>
+    <p class="hero-sub">"Trade 5 seconds of attention for unlimited AI. No wallet. No subscription. No friction."</p>
+    <div class="hero-chips">
+      <span class="chip chip-green">⚡ x402 Payments</span>
+      <span class="chip chip-cyan">🔷 Monad Testnet</span>
+      <span class="chip chip-amber">🤖 Claude / GPT-4</span>
+      <span class="chip chip-purple">⏱ 6-Hour Build</span>
+      <span class="chip chip-green">💻 CLI / Terminal</span>
+      <span class="chip chip-cyan">📢 ASCII Ads</span>
+    </div>
+  </section>
+
+  <div class="content">
+
+    <!-- ── SECTION: OVERVIEW ── -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>What Is AdShell?</h2>
+      </div>
+      <p>AdShell is an open-source AI coding assistant CLI that introduces a third tier between "free (no AI)" and "paid subscription" — <strong style="color:var(--green)">attention-subsidized access</strong>. Instead of paying with a credit card, users watch a single ASCII advertisement before each AI call. That ad view triggers an x402 micropayment on Monad that pays for the AI API call. The entire loop completes in under 4 seconds.</p>
+
+      <div class="card-grid">
+        <div class="mini-card">
+          <div class="icon">📺</div>
+          <h4>ASCII Ads in CLI</h4>
+          <p>Terminal-native ad display. 3-second countdown. ASCII art + tagline rendered in a side panel using Ink.js.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">⚡</div>
+          <h4>x402 Micropayments</h4>
+          <p>HTTP-native payments. No MetaMask popup. No gas estimation. The x402 client auto-signs and sends USDC in a request header.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">🔷</div>
+          <h4>Monad Settlement</h4>
+          <p>10,000 TPS, 0.4-second blocks. Every impression and every AI payment settles on Monad before the user sees the response.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">🤖</div>
+          <h4>AI Proxy Gating</h4>
+          <p>One gated endpoint. Valid x402 payment → Anthropic/OpenAI call. Streamed response back to CLI. Users never need API keys.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: PROBLEM ── -->
+    <section class="section" id="problem">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Problem & Solution</h2>
+      </div>
+
+      <div class="card card-red">
+        <h3>❌ The Three Broken Things</h3>
+        <ul class="bullets amber">
+          <li><strong>Premium AI APIs are paywalled.</strong> Claude, GPT-4, Gemini — all require a credit card + minimum spend. Billions of developers globally cannot access the best tools without financial infrastructure they don't have.</li>
+          <li><strong>Micropayments haven't worked on the web.</strong> HTTP 402 was reserved in 1995 but left unimplemented for 30 years. Gas fees, latency, and account friction made sub-cent payments impossible — until x402 + Monad.</li>
+          <li><strong>CLI tools have zero monetization layer.</strong> OpenCode (131k stars), Claude Code, Cursor terminal — none can subsidize free users at the infrastructure level. They either charge everyone or absorb cost themselves. No middle path exists.</li>
+        </ul>
+      </div>
+
+      <div class="card card-green">
+        <h3>✅ The AdShell Solution</h3>
+        <ul class="bullets">
+          <li><strong>Attention as currency.</strong> One 3-second ASCII ad = one AI call. The attention economy, applied to developer tooling for the first time.</li>
+          <li><strong>x402 as the payment rail.</strong> Machine-to-machine HTTP payments. No accounts, no sessions, no human intervention. Lives inside HTTP headers.</li>
+          <li><strong>Monad as settlement layer.</strong> 10,000 TPS means thousands of impression + API payment pairs per minute. Gas cost per transfer (~$0.0001) is 10× cheaper than the $0.001 payment amount.</li>
+          <li><strong>Embedded wallet — zero UX friction.</strong> Wallet auto-generated on first run, private key stored locally. No setup, no faucet, no bridge. Users never know they have a crypto wallet.</li>
+        </ul>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: ECONOMICS ── -->
+    <section class="section" id="economics">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Economic Model</h2>
+      </div>
+
+      <p>The core innovation is a <strong style="color:var(--green)">zero-sum economic loop</strong> where advertiser budget, user attention, and AI API cost all balance to exactly $0 for the user.</p>
+
+      <!-- Flow diagram -->
+      <div class="flow-row">
+        <div class="flow-node">
+          <div class="fn-icon">🏢</div>
+          <div class="fn-label">Advertiser</div>
+          <div class="fn-detail">deposits $10 USDC<br>into AdPool.sol</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:rgba(0,229,160,0.3);">
+          <div class="fn-icon">📢</div>
+          <div class="fn-label">Ad Impression</div>
+          <div class="fn-detail">ASCII ad renders<br>3s countdown</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:rgba(0,200,255,0.3);">
+          <div class="fn-icon">⛓️</div>
+          <div class="fn-label">Monad Settle</div>
+          <div class="fn-detail">+$0.001 USDC<br>→ user wallet (0.4s)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:rgba(255,184,48,0.3);">
+          <div class="fn-icon">💸</div>
+          <div class="fn-label">x402 Payment</div>
+          <div class="fn-detail">-$0.001 USDC<br>→ AI proxy</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:rgba(167,139,250,0.3);">
+          <div class="fn-icon">🤖</div>
+          <div class="fn-label">AI Response</div>
+          <div class="fn-detail">Claude streams<br>back to CLI</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          <strong>Net result per request:</strong> Advertiser −$0.001 · User $0.000 net (earned $0.001, spent $0.001) · AI Proxy +$0.001 revenue · Two Monad transactions settled · Total time ≈ 3.5 seconds.
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Real-World Analogy</th>
+            <th>AdShell Equivalent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ASCII ads in CLI</strong></td>
+            <td>TV commercials before free content</td>
+            <td>3-second ASCII banner in terminal side panel</td>
+          </tr>
+          <tr>
+            <td><strong>x402 impression payment</strong></td>
+            <td>Google AdSense paying publishers per impression</td>
+            <td>AdPool.claimImpression() → user wallet</td>
+          </tr>
+          <tr>
+            <td><strong>AI API proxy</strong></td>
+            <td>SaaS backend accepting ad revenue</td>
+            <td>Express server with x402 middleware + Anthropic SDK</td>
+          </tr>
+          <tr>
+            <td><strong>Monad blockchain</strong></td>
+            <td>UPI but trustless</td>
+            <td>10,000 TPS instant settlement rail</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: STAKEHOLDERS ── -->
+    <section class="section" id="stakeholders">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>Three Stakeholders</h2>
+      </div>
+      <div class="card-grid">
+        <div class="card card-green" style="margin-bottom:0">
+          <h3>👨‍💻 The Free Developer</h3>
+          <ul class="bullets">
+            <li>Student, open-source contributor, junior developer anywhere in the world</li>
+            <li>Installs AdShell for free via npm — one command</li>
+            <li>Sees ASCII ad banner before each AI prompt</li>
+            <li>Embedded wallet auto-created, zero setup</li>
+            <li>Never signs a transaction manually, never knows they have a wallet</li>
+            <li>Gets Claude / GPT-4 answers at zero direct cost</li>
+          </ul>
+        </div>
+        <div class="card card-amber" style="margin-bottom:0">
+          <h3>🏢 The Advertiser</h3>
+          <ul class="bullets amber">
+            <li>Blockchain project, SaaS company, dev tool wanting developer reach</li>
+            <li>Uploads ASCII art creative to dashboard (or uses AI generator)</li>
+            <li>Sets budget in USDC — deposits into AdPool.sol on Monad</li>
+            <li>Defines targeting: language stack, OS type</li>
+            <li>Pays per verified impression — not per click, not per day</li>
+            <li>Real-time analytics: CPM, impressions served, remaining budget</li>
+          </ul>
+        </div>
+        <div class="card card-cyan" style="margin-bottom:0">
+          <h3>⚙️ The AI Proxy (Protocol)</h3>
+          <ul class="bullets cyan">
+            <li>AdShell backend — the economic bridge between all parties</li>
+            <li>Holds actual Anthropic / OpenAI API keys — users never need them</li>
+            <li>Receives x402 micropayments to release AI access</li>
+            <li>Forwards payment header to Monad x402 Facilitator for on-chain verification</li>
+            <li>Streams AI response back to CLI after payment confirmed</li>
+            <li>Revenue covers AI API bills — self-sustaining model</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: SYSTEMS ── -->
+    <section class="section" id="systems">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>System Architecture (5 Components)</h2>
+      </div>
+
+      <div class="arch-diagram">
+<span class="w">  AdShell System Architecture</span>
+<span class="d">  ────────────────────────────────────────────────────────</span>
+
+<span class="g">  [CLI Application]</span>           <span class="c">[Ad Server]</span>             <span class="a">[Monad Testnet]</span>
+  <span class="d">┌─────────────────┐</span>         <span class="d">┌───────────────┐</span>         <span class="d">┌──────────────────┐</span>
+  <span class="d">│</span> Zone A: Chat    <span class="d">│</span>         <span class="d">│</span> GET /ad       <span class="d">│</span>         <span class="d">│</span> AdPool.sol       <span class="d">│</span>
+  <span class="d">│</span> Zone B: Ad Panel<span class="d">│</span> ──────► <span class="d">│</span> POST /claim   <span class="d">│</span> ──────► <span class="d">│</span> claimImpression()<span class="d">│</span>
+  <span class="d">│</span> Zone C: Footer  <span class="d">│</span>         <span class="d">│</span> GET /stats    <span class="d">│</span>         <span class="d">│</span> deposit()        <span class="d">│</span>
+  <span class="d">└────────┬────────┘</span>         <span class="d">└───────────────┘</span>         <span class="d">└──────────────────┘</span>
+           <span class="d">│</span>                                                        <span class="d">▲</span>
+           <span class="d">│</span> x402 payment                                           <span class="d">│</span>
+           <span class="d">▼</span>                                                Ad Server calls
+  <span class="p">[AI Proxy Server]</span>                                       contract on claim
+  <span class="d">┌─────────────────┐</span>         <span class="a">[x402 Facilitator]</span>
+  <span class="d">│</span> POST /ai        <span class="d">│</span>         <span class="d">┌───────────────────────────────┐</span>
+  <span class="d">│</span> @x402/express   <span class="d">│</span> ──────► <span class="d">│</span> molandak.org                  <span class="d">│</span>
+  <span class="d">│</span> Anthropic SDK   <span class="d">│</span>         <span class="d">│</span> verifies EIP-712 signature    <span class="d">│</span>
+  <span class="d">└────────┬────────┘</span>         <span class="d">│</span> executes USDC transfer        <span class="d">│</span>
+           <span class="d">│</span>                 <span class="d">│</span> returns tx hash               <span class="d">│</span>
+           <span class="d">▼</span>                 <span class="d">└───────────────────────────────┘</span>
+  <span class="c">[Anthropic API]</span>
+  Streams response
+      </div>
+
+      <div class="card card-green">
+        <h3>📟 System 1 — CLI Application</h3>
+        <ul class="bullets">
+          <li><strong>Framework:</strong> Ink.js (React-in-terminal) + Chalk for ANSI colors + DotEnv for config</li>
+          <li><strong>Zone A — Main Chat Panel (70% width):</strong> Standard REPL — prompts in, AI responses stream out</li>
+          <li><strong>Zone B — Ad Panel (30% width, right side):</strong> ASCII art, advertiser tagline, countdown timer. Auto-closes after impression settles</li>
+          <li><strong>Zone C — Status Footer (full width):</strong> Wallet address (truncated), USDC balance, impression tx hash, payment tx hash, Monad explorer links</li>
+          <li><strong>Embedded Wallet:</strong> EVM keypair generated on first run. Stored at <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">~/.adshell/wallet.enc</code> encrypted with machine ID. All x402 signing happens silently in background</li>
+          <li><strong>x402 Client:</strong> Wraps fetch with <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">@x402/client</code> — auto-constructs EIP-712 authorization, attaches as PAYMENT-SIGNATURE header, retries on 402</li>
+        </ul>
+      </div>
+
+      <div class="card card-cyan">
+        <h3>📢 System 2 — Ad Server</h3>
+        <ul class="bullets cyan">
+          <li><strong>Framework:</strong> Express.js + Ethers.js for contract calls + in-memory session store (MVP)</li>
+          <li><strong><code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">GET /ad?wallet=0x...</code></strong> — returns ASCII creative + one-time session token</li>
+          <li><strong><code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">POST /claim</code></strong> — validates impression (≥3s elapsed, session token match, wallet match) then calls <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">AdPool.claimImpression()</code> on Monad</li>
+          <li><strong>Anti-fraud:</strong> One-time session tokens, 3s minimum display time, wallet rate limiting, double-claim prevention</li>
+          <li><strong>Ad Creatives:</strong> Stored as JSON — ASCII art string (20 lines × 40 chars), tagline (60 chars max), ANSI color codes, destination URL</li>
+          <li><strong>MVP:</strong> 3 hardcoded ASCII ads served in round-robin — Kuru DEX, Monad Foundation, AdShell self-promo</li>
+        </ul>
+      </div>
+
+      <div class="card card-amber">
+        <h3>⛓️ System 3 — Smart Contracts (Monad)</h3>
+        <ul class="bullets amber">
+          <li><strong>AdPool.sol</strong> — primary contract holding advertiser USDC deposits on Monad testnet</li>
+          <li><strong><code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">deposit(amount)</code></strong> — advertisers call to fund their campaign in USDC (6 decimal)</li>
+          <li><strong><code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">claimImpression(userWallet)</code></strong> — only callable by authorized Ad Server hot wallet. Transfers IMPRESSION_COST (1000 = $0.001) from active advertiser budget → user wallet</li>
+          <li><strong><code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">withdraw(amount)</code></strong> — advertisers pull unspent budget back anytime</li>
+          <li><strong>USDC address (Monad testnet):</strong> <code style="color:var(--amber);font-family:var(--font-mono);font-size:11px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">0x534b2f3A21130d7a60830c2Df862319e593943A3</code></li>
+          <li><strong>Deployed via Foundry</strong> — <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad.xyz</code></li>
+        </ul>
+      </div>
+
+      <div class="card card-purple">
+        <h3>🤖 System 4 — AI Proxy Server</h3>
+        <ul class="bullets">
+          <li><strong>Framework:</strong> Express.js + <code style="color:var(--purple);font-family:var(--font-mono);font-size:12px;background:rgba(167,139,250,0.08);padding:1px 6px;border-radius:3px;">@x402/express</code> middleware + Anthropic SDK</li>
+          <li><strong>Payment gate:</strong> <code style="color:var(--purple);font-family:var(--font-mono);font-size:12px;background:rgba(167,139,250,0.08);padding:1px 6px;border-radius:3px;">POST /ai</code> costs exactly $0.001 USDC on Monad testnet (eip155:10143)</li>
+          <li><strong>Request lifecycle:</strong> Receive request → extract PAYMENT-SIGNATURE header → forward to Monad Facilitator (<code style="color:var(--purple);font-family:var(--font-mono);font-size:12px;">x402-facilitator.molandak.org</code>) → verify EIP-712 + settle → get tx hash → forward to Anthropic → stream response</li>
+          <li><strong>Model routing (MVP):</strong> Always routes to <code style="color:var(--purple);font-family:var(--font-mono);font-size:12px;background:rgba(167,139,250,0.08);padding:1px 6px;border-radius:3px;">claude-haiku-4-5</code> (fastest, cheapest)</li>
+          <li><strong>Gas sponsorship:</strong> x402 Facilitator covers Monad gas — user wallet needs zero MON. Gasless from user perspective</li>
+          <li><strong>Streaming:</strong> SSE (Server-Sent Events) back to CLI for real-time token streaming</li>
+        </ul>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: DATA FLOW ── -->
+    <section class="section" id="dataflow">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Complete Data Flow (End-to-End)</h2>
+      </div>
+
+      <div class="arch-diagram">
+<span class="w">USER</span> types: <span class="a">adshell ask "explain this Solidity function"</span>
+<span class="d">│</span>
+<span class="d">├─ [0.1s]</span>  CLI → <span class="c">GET /ad?wallet=0xUSER</span> → Ad Server
+<span class="d">│           </span>Ad Server returns: <span class="g">{ sessionToken, ASCII art, displaySeconds: 3 }</span>
+<span class="d">│</span>
+<span class="d">├─ [0.0s]</span>  ASCII ad <span class="w">renders</span> in Zone B
+<span class="d">│           </span>Countdown starts: <span class="a">3... 2... 1...</span>
+<span class="d">│</span>
+<span class="d">├─ [3.0s]</span>  Timer expires → CLI → <span class="c">POST /claim</span>
+<span class="d">│           </span>Body: <span class="g">{ sessionToken, walletAddress, timestamp }</span>
+<span class="d">│</span>
+<span class="d">├─ [0.4s]</span>  Ad Server validates → calls <span class="a">AdPool.claimImpression(0xUSER)</span>
+<span class="d">│           </span>Monad settles: AdPool → <span class="g">+$0.001 USDC</span> → user wallet
+<span class="d">│           </span>Footer: <span class="g">✅ +$0.001 USDC [tx: 0xABC...]</span>
+<span class="d">│</span>
+<span class="d">├─ [0.1s]</span>  x402 client detects USDC balance
+<span class="d">│           </span>Constructs EIP-712 signed authorization for <span class="g">$0.001 USDC</span>
+<span class="d">│           </span>Signs with embedded wallet key (silent)
+<span class="d">│</span>
+<span class="d">├─ [0.5s]</span>  CLI → <span class="c">POST /ai</span> with <span class="p">PAYMENT-SIGNATURE</span> header
+<span class="d">│           </span>AI Proxy → Monad Facilitator → verify + settle
+<span class="d">│           </span>User wallet → <span class="a">-$0.001 USDC</span> → Proxy wallet
+<span class="d">│           </span>Footer: <span class="a">💸 -$0.001 USDC [tx: 0xDEF...]</span>
+<span class="d">│</span>
+<span class="d">├─ [2-5s]</span>  Proxy → Anthropic API → <span class="g">streams tokens</span>
+<span class="d">│           </span>Zone A fills with Claude's response
+<span class="d">│</span>
+<span class="d">└─ [done]</span>  Footer: <span class="g">✅ Done | Press Q to exit</span>
+            Zone B (ad panel) closes
+
+<span class="d">─────────────────────────────────────────────</span>
+<span class="g">NET: Advertiser −$0.001 · User $0.000 · Proxy +$0.001</span>
+<span class="d">Two Monad txs · Total ≈ 4.1 seconds</span>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SECTION: TECH STACK ── -->
+    <section class="section" id="tech">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Complete Tech Stack</h2>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Technology</th>
+            <th>Package / Tool</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CLI Framework</strong></td>
+            <td>Ink.js + React</td>
+            <td><code>ink react</code></td>
+            <td>React-in-terminal UI components</td>
+          </tr>
+          <tr>
+            <td><strong>CLI Styling</strong></td>
+            <td>Chalk + Boxen</td>
+            <td><code>chalk boxen figlet</code></td>
+            <td>ANSI colors, boxes, ASCII art fonts</td>
+          </tr>
+          <tr>
+            <td><strong>x402 Client</strong></td>
+            <td>x402 Protocol</td>
+            <td><code>@x402/client @x402/evm</code></td>
+            <td>Auto-paying fetch wrapper for CLI</td>
+          </tr>
+          <tr>
+            <td><strong>x402 Server</strong></td>
+            <td>x402 Express Middleware</td>
+            <td><code>@x402/express</code></td>
+            <td>Gates /ai endpoint with payment requirement</td>
+          </tr>
+          <tr>
+            <td><strong>Blockchain</strong></td>
+            <td>Ethers.js v6</td>
+            <td><code>ethers</code></td>
+            <td>Wallet generation, contract calls, signing</td>
+          </tr>
+          <tr>
+            <td><strong>EVM Alternative</strong></td>
+            <td>Viem</td>
+            <td><code>viem</code></td>
+            <td>Lighter EVM interactions for proxy server</td>
+          </tr>
+          <tr>
+            <td><strong>AI API</strong></td>
+            <td>Anthropic SDK</td>
+            <td><code>@anthropic-ai/sdk</code></td>
+            <td>Streaming claude-haiku calls from proxy</td>
+          </tr>
+          <tr>
+            <td><strong>API Servers</strong></td>
+            <td>Express.js</td>
+            <td><code>express cors dotenv</code></td>
+            <td>Ad Server + AI Proxy HTTP servers</td>
+          </tr>
+          <tr>
+            <td><strong>Smart Contracts</strong></td>
+            <td>Solidity 0.8.20</td>
+            <td>Foundry (forge)</td>
+            <td>AdPool.sol on Monad testnet</td>
+          </tr>
+          <tr>
+            <td><strong>TypeScript</strong></td>
+            <td>TSX for dev</td>
+            <td><code>tsx typescript</code></td>
+            <td>Fast TS execution without compile step</td>
+          </tr>
+          <tr>
+            <td><strong>Network</strong></td>
+            <td>Monad Testnet</td>
+            <td>eip155:10143</td>
+            <td>10,000 TPS, 0.4s blocks, x402 Facilitator</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="code-label">INSTALL EVERYTHING UPFRONT</div>
+      <pre><span class="c"># CLI dependencies</span>
+npm install ink react @types/react typescript tsx
+npm install @x402/client @x402/evm ethers chalk boxen axios dotenv
+
+<span class="c"># AI Proxy dependencies</span>
+npm install express @x402/express @x402/evm viem @anthropic-ai/sdk cors dotenv tsx
+
+<span class="c"># Ad Server dependencies</span>
+npm install express ethers viem cors dotenv tsx
+
+<span class="c"># Smart contracts — Foundry</span>
+curl -L https://foundry.paradigm.xyz | bash &amp;&amp; foundryup</pre>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ══════════════════════════════════════════════
+         PHASE PLAN
+    ══════════════════════════════════════════════ -->
+    <section class="section" id="phase0">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.2);">PHASE 0</span>
+        <h2>Environment Setup</h2>
+        <span class="timeline-badge chip-green chip" style="margin-left:auto;">0:00 → 0:20</span>
+      </div>
+
+      <div class="callout callout-amber">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body"><strong>Do these before the clock starts:</strong> Get testnet MON from the Monad faucet (needed for contract deploy + gas on Ad Server's claimImpression calls). Get testnet USDC. Confirm Anthropic API key has credits. Have two hot wallets ready — one for the AI Proxy, one for the Ad Server.</div>
+      </div>
+
+      <div class="card card-green">
+        <h3>Repo Structure to Create</h3>
+        <pre>adshell/
+├── contracts/
+│   ├── src/AdPool.sol
+│   ├── script/Deploy.s.sol
+│   └── foundry.toml
+├── server/
+│   ├── ai-proxy/index.ts
+│   └── ad-server/index.ts + ads.ts
+├── cli/
+│   ├── src/index.tsx              ← Ink entry point
+│   ├── src/wallet.ts              ← embedded wallet
+│   ├── src/x402client.ts          ← payment-aware fetch
+│   └── src/components/
+│       ├── ChatPanel.tsx
+│       ├── AdPanel.tsx
+│       └── StatusFooter.tsx
+└── .env                           ← NEVER commit</pre>
+      </div>
+
+      <div class="card card-amber">
+        <h3>Required .env Variables</h3>
+        <ul class="bullets amber">
+          <li><strong>ANTHROPIC_API_KEY</strong> — your Anthropic API key (sk-ant-...)</li>
+          <li><strong>PROXY_WALLET_PRIVATE_KEY</strong> — hot wallet that receives x402 payments from users</li>
+          <li><strong>AD_SERVER_PRIVATE_KEY</strong> — hot wallet that calls claimImpression() on AdPool contract</li>
+          <li><strong>ADPOOL_CONTRACT_ADDRESS</strong> — fill after Phase 1 deploy</li>
+          <li><strong>MONAD_RPC</strong> → <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">https://testnet-rpc.monad.xyz</code></li>
+          <li><strong>MONAD_USDC</strong> → <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">0x534b2f3A21130d7a60830c2Df862319e593943A3</code></li>
+          <li><strong>X402_FACILITATOR</strong> → <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">https://x402-facilitator.molandak.org</code></li>
+        </ul>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase1">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.2);">PHASE 1</span>
+        <h2>Smart Contract — AdPool.sol</h2>
+        <span class="timeline-badge chip-green chip" style="margin-left:auto;">0:20 → 0:50</span>
+      </div>
+
+      <ul class="bullets">
+        <li><strong>Write AdPool.sol</strong> — USDC deposit/payout contract with advertiser budget mapping and authorized Ad Server caller</li>
+        <li><strong>Key state:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">adBudgets</code> mapping, <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">IMPRESSION_COST = 1000</code> (0.001 USDC), <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">authorizedAdServer</code></li>
+        <li><strong>Key functions:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">deposit(amount)</code>, <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">claimImpression(userWallet)</code>, <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">withdraw(amount)</code></li>
+        <li><strong>Write Deploy.s.sol</strong> — Foundry deploy script. Takes Ad Server wallet address + USDC address as constructor args</li>
+        <li><strong>Configure foundry.toml</strong> — set Monad testnet RPC endpoint and Solidity 0.8.20</li>
+        <li><strong>Run:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad.xyz --broadcast</code></li>
+        <li><strong>Copy contract address</strong> → paste into .env as ADPOOL_CONTRACT_ADDRESS</li>
+        <li><strong>Seed with test budget:</strong> Use <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">cast send</code> to approve + deposit 10 USDC (= 10,000 impressions). Verify on Monad Explorer</li>
+      </ul>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body"><strong>Phase 1 done when:</strong> Contract is deployed at a known address, has ≥10 USDC budget from a seeded advertiser, and you can see the <code style="color:var(--green);font-family:var(--font-mono);font-size:12px;">activeAdvertiser()</code> returning your test wallet address.</div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase2">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(0,200,255,0.1);border-color:rgba(0,200,255,0.2);color:var(--cyan);">PHASE 2</span>
+        <h2>AI Proxy Server with x402</h2>
+        <span class="timeline-badge chip-cyan chip" style="margin-left:auto;">0:50 → 1:40</span>
+      </div>
+
+      <ul class="bullets cyan">
+        <li><strong>Express server on port 3001</strong> — single meaningful endpoint: <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">POST /ai</code></li>
+        <li><strong>Apply <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">paymentMiddleware</code></strong> from @x402/express — price $0.001, network eip155:10143, payTo proxy wallet address</li>
+        <li><strong>Connect to Monad x402 Facilitator</strong> — set facilitator URL to <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;">https://x402-facilitator.molandak.org</code></li>
+        <li><strong>On valid payment:</strong> Forward prompt to Anthropic SDK using streaming mode (<code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">anthropic.messages.stream()</code>)</li>
+        <li><strong>SSE streaming:</strong> Write <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">data: {"text": "..."}</code> events as tokens arrive, close with <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">data: [DONE]</code></li>
+        <li><strong>Model:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">claude-haiku-4-5</code> — fastest and cheapest for demo</li>
+        <li><strong>Test:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;">curl -X POST localhost:3001/ai -d '{"prompt":"hello"}'</code> should return <strong>HTTP 402</strong> with payment requirements JSON</li>
+      </ul>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body"><strong>Phase 2 done when:</strong> curl returns HTTP 402 on /ai without payment, and the proxy processes a valid x402-signed request and returns a streaming Claude response.</div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase3">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(0,200,255,0.1);border-color:rgba(0,200,255,0.2);color:var(--cyan);">PHASE 3</span>
+        <h2>Ad Server</h2>
+        <span class="timeline-badge chip-cyan chip" style="margin-left:auto;">1:40 → 2:30</span>
+      </div>
+
+      <ul class="bullets cyan">
+        <li><strong>Express server on port 3002</strong> — two routes: <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">GET /ad</code> and <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">POST /claim</code></li>
+        <li><strong>ads.ts file</strong> — hardcode 3 ASCII ad creatives (Kuru DEX, Monad Foundation, AdShell self-promo). Each has: ascii string, tagline, advertiser name, url. Round-robin selector</li>
+        <li><strong>GET /ad logic:</strong> Receive wallet address → pick next ad → generate UUID session token → store session in Map with timestamp + wallet + claimed:false → return ad + token</li>
+        <li><strong>POST /claim logic:</strong> Receive {sessionToken, walletAddress, timestamp} → validate session exists → check wallet matches → check elapsed ≥ 3000ms → mark claimed → call <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">adPool.claimImpression(walletAddress)</code> → await tx → return txHash</li>
+        <li><strong>Anti-fraud:</strong> Mark session claimed=true BEFORE tx (prevent race condition). Unmark on tx failure to allow retry</li>
+        <li><strong>Connect to AdPool:</strong> Ethers.js contract instance with Ad Server hot wallet as signer on Monad testnet</li>
+        <li><strong>Session TTL:</strong> Auto-delete sessions after 60 seconds using setTimeout</li>
+        <li><strong>Test:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;">curl "localhost:3002/ad?wallet=0xABCD..."</code> should return JSON with ASCII art and session token</li>
+      </ul>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body"><strong>Phase 3 done when:</strong> GET /ad returns an ad with a session token, and POST /claim after 3+ seconds returns a Monad tx hash where the user wallet received +0.001 USDC. Verify on Monad Explorer.</div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase4">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(255,184,48,0.1);border-color:rgba(255,184,48,0.2);color:var(--amber);">PHASE 4</span>
+        <h2>CLI Application</h2>
+        <span class="timeline-badge chip-amber chip" style="margin-left:auto;">2:30 → 5:00 · BIGGEST PHASE</span>
+      </div>
+
+      <div class="callout callout-amber">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body"><strong>2.5 hours reserved here.</strong> Ink.js can be tricky. If it gives version conflicts, fall back to plain readline + chalk — slower to build but reliable. The economic loop matters more than the TUI polish.</div>
+      </div>
+
+      <div class="card card-amber">
+        <h3>4.1 — wallet.ts (30 min)</h3>
+        <ul class="bullets amber">
+          <li><strong>getOrCreateWallet():</strong> Check <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">~/.adshell/wallet.enc</code> — if exists, decrypt and return. If not, generate new ethers.Wallet.createRandom(), encrypt private key using machine ID as key, write file with 0o600 permissions</li>
+          <li><strong>Encryption:</strong> AES-256-CBC using Node.js crypto, machine key derived from <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">process.env.USER + os.hostname()</code></li>
+          <li><strong>getUSDCBalance(address):</strong> Call USDC contract's balanceOf() on Monad RPC. Return formatted string (6 decimals → 4 decimal display)</li>
+          <li><strong>Test:</strong> Run wallet.ts standalone — should create ~/.adshell/wallet.enc and print an address</li>
+        </ul>
+      </div>
+
+      <div class="card card-amber">
+        <h3>4.2 — x402client.ts (30 min)</h3>
+        <ul class="bullets amber">
+          <li><strong>createPayingFetch(privateKey):</strong> Create ethers Wallet connected to Monad RPC. Wrap with <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">wrapFetchWithPayment(fetch, wallet)</code> from @x402/client</li>
+          <li><strong>streamAIResponse():</strong> Use payingFetch to POST /ai — auto-handles 402 response by attaching payment header. Parse SSE stream: split on newline, look for <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">data: </code> prefix, JSON.parse, call onChunk callback</li>
+          <li><strong>Payment tx hash:</strong> Extract from response headers (<code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">x-payment-tx-hash</code>) and call onPaymentTx callback</li>
+        </ul>
+      </div>
+
+      <div class="card card-amber">
+        <h3>4.3 — UI Components (60 min)</h3>
+        <ul class="bullets amber">
+          <li><strong>AdPanel.tsx:</strong> Box with yellow border. Shows ASCII art (green), tagline (white bold), advertiser (gray). Internal countdown state. Progress bar using █ and ░ chars. Three status states: "showing" (progress bar), "claiming" (spinner text), "paid" (✅ + tx hash)</li>
+          <li><strong>StatusFooter.tsx:</strong> Full-width single-border Box. Three sections: wallet address (truncated 0x1234...abcd), USDC balance, impression tx hash, payment tx hash, current status text</li>
+          <li><strong>ChatPanel.tsx:</strong> Flex column. Header with AdShell branding. Map over messages array — user messages in yellow, assistant in white. Streaming text with blinking cursor (▌ in cyan). "Waiting..." text when loading but no stream yet</li>
+        </ul>
+      </div>
+
+      <div class="card card-amber">
+        <h3>4.4 — Main index.tsx (60 min)</h3>
+        <ul class="bullets amber">
+          <li><strong>State machine:</strong> idle → fetching-ad → showing-ad → claiming-impression → paying-ai → streaming-response → done</li>
+          <li><strong>runFlow() async function:</strong> Orchestrates entire sequence — fetch ad → countdown → claim → x402 pay → stream response. All in useEffect on mount</li>
+          <li><strong>CLI entry:</strong> Parse <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">process.argv</code> for <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">ask "prompt"</code> pattern. Print usage and exit(1) if invalid</li>
+          <li><strong>Layout:</strong> Outer column Box → inner row Box (ChatPanel + AdPanel side by side) → StatusFooter at bottom</li>
+          <li><strong>Quit handling:</strong> useInput hook — 'q' or Ctrl+C calls exit()</li>
+          <li><strong>package.json bin:</strong> Point <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">adshell</code> binary to <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">dist/index.js</code> or use tsx directly for dev</li>
+        </ul>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase5">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.2);color:var(--purple);">PHASE 5</span>
+        <h2>Wire the Full Loop</h2>
+        <span class="timeline-badge chip-purple chip" style="margin-left:auto;">5:00 → 5:40</span>
+      </div>
+
+      <ul class="bullets">
+        <li><strong>Start all 3 services:</strong> Tab 1 → AI Proxy on :3001 · Tab 2 → Ad Server on :3002 · Tab 3 → CLI ready</li>
+        <li><strong>Test command:</strong> <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;background:rgba(0,200,255,0.08);padding:1px 6px;border-radius:3px;">node -r dotenv/config -r tsx/esm src/index.tsx ask "explain what a monad is in math"</code></li>
+        <li><strong>Watch the sequence:</strong> Ad renders → 3s countdown → impression tx in footer → payment tx in footer → Claude streams</li>
+        <li><strong>Verify on Monad Explorer:</strong> Paste both tx hashes at <code style="color:var(--cyan);font-family:var(--font-mono);font-size:12px;">testnet.monadexplorer.com</code> — both should be confirmed transfers</li>
+      </ul>
+
+      <div class="card card-red">
+        <h3>🐛 Debug Checklist</h3>
+        <table class="data-table" style="margin:0">
+          <thead><tr><th>Symptom</th><th>Check This</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ad server returns 500</strong></td><td>ADPOOL_CONTRACT_ADDRESS set? Ad server wallet has MON for gas?</td></tr>
+            <tr><td><strong>x402 payment fails</strong></td><td>User wallet has USDC? Impression claimed first? Proxy wallet address correct?</td></tr>
+            <tr><td><strong>AI response empty</strong></td><td>ANTHROPIC_API_KEY valid? AI proxy running on :3001?</td></tr>
+            <tr><td><strong>CLI crashes on render</strong></td><td>Ink.js version match? tsx installed? React 18 compatible?</td></tr>
+            <tr><td><strong>Contract call reverts</strong></td><td>Active advertiser has budget? Ad server wallet is authorizedAdServer?</td></tr>
+            <tr><td><strong>Balance shows 0 after claim</strong></td><td>USDC address correct? Contract deploy used right USDC address?</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body"><strong>Phase 5 done when:</strong> Running <code style="color:var(--green);font-family:var(--font-mono);font-size:12px;">adshell ask "hello"</code> shows the full loop — ad renders, two tx hashes appear in footer, Claude responds. Both txs visible on Monad Explorer.</div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section class="section" id="phase6">
+      <div class="section-header">
+        <span class="section-num" style="background:rgba(255,184,48,0.1);border-color:rgba(255,184,48,0.2);color:var(--amber);">PHASE 6</span>
+        <h2>Demo Prep</h2>
+        <span class="timeline-badge chip-amber chip" style="margin-left:auto;">5:40 → 6:00</span>
+      </div>
+
+      <ul class="bullets amber">
+        <li><strong>npm link</strong> — makes <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">adshell</code> command available globally. Test: <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">which adshell</code></li>
+        <li><strong>Pre-seed budget:</strong> Top up AdPool with fresh USDC before going on stage. Confirm balance via cast call</li>
+        <li><strong>Demo prompt:</strong> Use <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px;background:rgba(255,184,48,0.08);padding:1px 6px;border-radius:3px;">adshell ask "explain this Solidity function: function claimImpression(address user)"</code> — perfect for a Monad audience</li>
+        <li><strong>Have Monad Explorer open</strong> in browser tab, ready to paste tx hashes live on stage</li>
+        <li><strong>Know your numbers:</strong> Total impressions served (cast call), USDC settled (impressions × $0.001), contract address for judges</li>
+        <li><strong>Rehearse the narration:</strong> 10s hook → 90s demo → 20s scale argument. Know exactly what to say at each step</li>
+      </ul>
+
+      <div class="card card-green">
+        <h3>🎯 Exact Demo Commands (Stage Script)</h3>
+        <pre><span class="c"># 1. Show clean terminal</span>
+clear
+
+<span class="c"># 2. Show binary exists</span>
+which adshell
+
+<span class="c"># 3. The magic command</span>
+adshell ask "explain this Solidity function: function claimImpression(address user)"
+
+<span class="c"># While ad shows — narrate live:</span>
+<span class="c"># "ASCII ad rendering. Ad Server calling AdPool.claimImpression() on Monad right now."</span>
+<span class="c"># "0.4 second block time..."</span>
+
+<span class="c"># After footer shows impression tx — narrate:</span>
+<span class="c"># "That's a live Monad transaction. $0.001 USDC just moved to this embedded wallet."</span>
+
+<span class="c"># After footer shows payment tx — narrate:</span>
+<span class="c"># "Same $0.001 USDC auto-paid to the AI proxy via x402. Two on-chain settlements."</span>
+
+<span class="c"># After Claude streams in:</span>
+<span class="c"># Open Monad Explorer. Paste both tx hashes. Show judges live proof.</span></pre>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- WHY MONAD -->
+    <section class="section" id="chain">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Why Monad Is Non-Negotiable</h2>
+      </div>
+
+      <p>Each AI interaction generates <strong style="color:var(--amber)">two on-chain transactions</strong> — impression claim + API payment. At modest usage (1,000 users × 10 requests/day) that is 20,000 transactions per day. The math eliminates every other chain:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Chain</th>
+            <th>TPS</th>
+            <th>Settlement</th>
+            <th>Gas per Transfer</th>
+            <th>Viable?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ethereum L1</strong></td>
+            <td>~15 TPS</td>
+            <td>~12 seconds</td>
+            <td>~$0.50</td>
+            <td><span class="no">❌ Gas > payout</span></td>
+          </tr>
+          <tr>
+            <td><strong>Arbitrum / Optimism</strong></td>
+            <td>~2,000 TPS</td>
+            <td>~2 seconds</td>
+            <td>~$0.01</td>
+            <td><span class="no">❌ Gas > payout</span></td>
+          </tr>
+          <tr>
+            <td><strong>Base</strong></td>
+            <td>~2,000 TPS</td>
+            <td>~2 seconds</td>
+            <td>~$0.001</td>
+            <td><span class="warn">⚠️ Marginal</span></td>
+          </tr>
+          <tr>
+            <td><strong>Monad</strong></td>
+            <td>10,000 TPS</td>
+            <td>~0.4 seconds</td>
+            <td>~$0.0001</td>
+            <td><span class="ok">✅ Perfect fit</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card-grid">
+        <div class="mini-card">
+          <div class="icon">💰</div>
+          <h4>Gas 10× cheaper than payout</h4>
+          <p>$0.0001 gas vs $0.001 payout = 10× margin. On Arbitrum, gas equals the payout. Economics break.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">⚡</div>
+          <h4>Settles during the ad display</h4>
+          <p>0.4s settlement means the impression claim settles WHILE the user is still watching the 3-second ad. Completely invisible.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">🏗️</div>
+          <h4>x402 Facilitator already live</h4>
+          <p>Monad has a deployed x402 facilitator at molandak.org. Working infrastructure out of the box — zero custom relay needed.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">📈</div>
+          <h4>10,000 TPS for scale</h4>
+          <p>50 concurrent demo users = 100 simultaneous transactions. Monad handles this trivially. Any L2 would clog.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- WHAT TO SKIP -->
+    <section class="section" id="skip">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>What to Skip (Save Time)</h2>
+      </div>
+      <p>These are intentionally out of scope for the 6-hour build. Every minute not spent on the core demo loop is wasted.</p>
+
+      <ul class="skip-list">
+        <li>Advertiser Dashboard web app — use direct cast commands to seed the AdPool for demo</li>
+        <li>Ad targeting system — use round-robin from 3 hardcoded ASCII creatives</li>
+        <li>Multi-model routing — just use claude-haiku-4-5 for everything</li>
+        <li>Production-grade wallet encryption — machine-ID key is fine for hackathon MVP</li>
+        <li>Redis / persistent session store — in-memory Map is sufficient for demo duration</li>
+        <li>Robust error recovery / retry logic — happy path only for the demo loop</li>
+        <li>Frequency capping / advanced anti-fraud — basic timing + session token is enough</li>
+        <li>Real advertiser onboarding flow — you are the advertiser for the demo</li>
+      </ul>
+    </section>
+
+    <hr class="divider">
+
+    <!-- PITCH -->
+    <section class="section" id="pitch">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Pitch One-Liner</h2>
+      </div>
+
+      <div class="pitch-box">
+        <p>
+          "OpenCode made AI open source. We made it <em>actually free</em> — watch an ASCII ad for 3 seconds, earn $0.001 USDC on Monad in 0.4 seconds, spend it on an AI call via x402. No wallet setup. No subscription. No friction. <em>This is AdSense for the terminal.</em>"
+        </p>
+      </div>
+
+      <div class="card-grid" style="margin-top:24px">
+        <div class="mini-card">
+          <div class="icon">🎯</div>
+          <h4>The Hook (10s)</h4>
+          <p>"Every developer here has used AI. Every developer here has hit a paywall. Watch 5 seconds of ASCII, get your answer free. That's AdShell."</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">🎬</div>
+          <h4>The Demo (90s)</h4>
+          <p>Live terminal: ad renders → footer shows +$0.001 → footer shows −$0.001 → Claude streams → open Monad Explorer → both tx hashes confirmed.</p>
+        </div>
+        <div class="mini-card">
+          <div class="icon">📊</div>
+          <h4>The Scale (20s)</h4>
+          <p>"500 million developers. Less than 5% have paid AI subscriptions. The 95% who don't — that's the addressable market. This is the infrastructure for that economy."</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /.content -->
+</main><!-- /.main -->
+
+</body>
+</html>
