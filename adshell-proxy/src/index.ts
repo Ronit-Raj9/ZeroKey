@@ -1,6 +1,7 @@
 import "dotenv/config"
 import { Hono } from "hono"
 import { cors } from "hono/cors"
+import { Prisma } from "@prisma/client"
 import { createThirdwebClient } from "thirdweb"
 import { facilitator, settlePayment } from "thirdweb/x402"
 import { monadTestnet } from "thirdweb/chains"
@@ -213,41 +214,43 @@ const thirdwebX402Facilitator = facilitator({
 })
 
 // ──────────────────────────────────────────────
-//  Fallback Ads (used when no on-chain registry)
+//  DB-backed Ad Serving
 // ──────────────────────────────────────────────
 
-const fallbackAds = [
-  {
-    sponsor: "Kuru",
-    title: "Build On Monad",
-    lines: [
-      "██╗  ██╗██╗   ██╗██████╗ ██╗   ██╗",
-      "██║ ██╔╝██║   ██║██╔══██╗██║   ██║",
-      "█████╔╝ ██║   ██║██████╔╝██║   ██║",
-      "██╔═██╗ ██║   ██║██╔══██╗██║   ██║",
-      "██║  ██╗╚██████╔╝██║  ██║╚██████╔╝",
-      "Ship faster on Monad-native infra.",
-    ],
-  },
-  {
-    sponsor: "Molandak",
-    title: "x402 On Monad",
-    lines: [
-      "Pay APIs the way HTTP always promised.",
-      "Fast finality. Cheap settlement. Agent-native rails.",
-      "Fund one ad view. Unlock one AI call.",
-    ],
-  },
-  {
-    sponsor: "AdShell",
-    title: "Attention Pays",
-    lines: [
-      "Watch one terminal ad.",
-      "Earn one on-chain credit.",
-      "Spend it instantly on your next model call.",
-    ],
-  },
-] as const
+async function getRandomActiveAd() {
+  const ads = await prisma.ad.findMany({ where: { isActive: true } })
+  if (ads.length === 0) return null
+  return ads[Math.floor(Math.random() * ads.length)]
+}
+
+async function upsertInstallation(machineId: string, walletAddress: string) {
+  return prisma.opencodeInstallation.upsert({
+    where: { machineId },
+    update: { walletAddress },
+    create: { machineId, walletAddress },
+  })
+}
+
+async function trackAdEvent(params: {
+  campaignId: string
+  advertiser: string
+  eventType: string
+  sessionID: string
+  walletAddress: string
+  metadata?: Prisma.InputJsonValue
+}) {
+  const installation = await upsertInstallation(params.sessionID, params.walletAddress)
+
+  return prisma.adEvent.create({
+    data: {
+      installationId: installation.id,
+      campaignId: params.campaignId,
+      advertiser: params.advertiser,
+      eventType: params.eventType,
+      metadata: params.metadata ?? {},
+    },
+  })
+}
 
 // ──────────────────────────────────────────────
 //  Analytics Counters (in-memory)
@@ -266,16 +269,15 @@ const analyticsCounters = {
 
 type ClaimRecord = {
   adId: string
+  sponsor: string
   walletAddress: string
   sessionID: string
   createdAt: number
   claimed: boolean
-  advertiser?: string // On-chain mode: which advertiser this impression is for
+  advertiserAddress?: string // On-chain mode: which advertiser this impression is for
 }
 
 const claims = new Map<string, ClaimRecord>()
-let adIndex = 0
-
 // Cleanup old claims every 5 minutes (prevent memory leak)
 setInterval(() => {
   const cutoff = Date.now() - 10 * 60 * 1000 // 10 min TTL
@@ -385,8 +387,9 @@ app.get("/ad/current", async (c) => {
     }
   }
 
-  let ad: { sponsor: string; title: string; lines: readonly string[] | string[] }
+  let ad: { sponsor: string; title: string; lines: string[] }
   let advertiserAddr: string | undefined
+  let dbAdId: string | undefined
 
   // Try on-chain registry first
   if (useOnChainPool && env.registryAddress) {
@@ -410,46 +413,67 @@ app.get("/ad/current", async (c) => {
           ad = {
             sponsor: creative[2], // sponsorName
             title: creative[1],   // tagline
-            lines: creative[0],   // asciiLines
+            lines: [...creative[0]],   // asciiLines
           }
           advertiserAddr = currentAdv
         } else {
-          // Approved advertiser but no active creative — use fallback
-          ad = fallbackAds[adIndex % fallbackAds.length]
-          adIndex++
+          const dbAd = await getRandomActiveAd()
+          if (!dbAd) return c.json({ error: "No active ads available" }, 503)
+          ad = dbAd
+          dbAdId = dbAd.id
         }
       } else {
-        ad = fallbackAds[adIndex % fallbackAds.length]
-        adIndex++
+        const dbAd = await getRandomActiveAd()
+        if (!dbAd) return c.json({ error: "No active ads available" }, 503)
+        ad = dbAd
+        dbAdId = dbAd.id
       }
     } catch {
-      // On-chain read failed — use fallback
-      ad = fallbackAds[adIndex % fallbackAds.length]
-      adIndex++
+      const dbAd = await getRandomActiveAd()
+      if (!dbAd) return c.json({ error: "No active ads available" }, 503)
+      ad = dbAd
+      dbAdId = dbAd.id
     }
   } else {
-    // Direct-transfer mode: use fallback ads
-    ad = fallbackAds[adIndex % fallbackAds.length]
-    adIndex++
+    // Direct-transfer mode: serve from DB
+    const dbAd = await getRandomActiveAd()
+    if (!dbAd) return c.json({ error: "No active ads available" }, 503)
+    ad = dbAd
+    dbAdId = dbAd.id
   }
 
   const claimId = crypto.randomUUID()
-  const adId = `${ad.sponsor.toLowerCase()}-${Date.now()}`
+  const adId = dbAdId || `${ad.sponsor.toLowerCase()}-${Date.now()}`
   claims.set(claimId, {
     adId,
+    sponsor: ad.sponsor,
     walletAddress: wallet,
     sessionID,
     createdAt: Date.now(),
     claimed: false,
-    advertiser: advertiserAddr,
+    advertiserAddress: advertiserAddr,
   })
+
+  // Track impression (fire-and-forget)
+  trackAdEvent({
+    campaignId: adId,
+    advertiser: ad.sponsor,
+    eventType: "impression",
+    sessionID,
+    walletAddress: wallet,
+    metadata: {
+      dbAdId: dbAdId ?? null,
+      advertiserAddress: advertiserAddr ?? null,
+      wallet,
+    },
+  }).catch(() => { })
 
   return c.json({
     adId,
     claimId,
     sponsor: ad.sponsor,
     title: ad.title,
-    lines: [...ad.lines], // Clone to mutable array
+    lines: [...ad.lines],
     dwellMs: 5000,
     rewardAmount: `$${env.rewardUsdc}`,
     onChain: Boolean(advertiserAddr),
@@ -564,30 +588,24 @@ app.post("/ad/claim", async (c) => {
   analyticsCounters.totalClaims++
   analyticsCounters.uniqueWallets.add(walletAddress.toLowerCase())
 
-    ; (async () => {
-      try {
-        const dbInstallation = await prisma.opencodeInstallation.upsert({
-          where: { machineId: sessionID },
-          update: { walletAddress },
-          create: {
-            machineId: sessionID,
-            walletAddress
-          }
-        })
-
-        await prisma.adEvent.create({
-          data: {
-            installationId: dbInstallation.id,
-            campaignId: claim.adId,
-            advertiser: claim.advertiser || "Direct",
-            eventType: "impression",
-            metadata: { claimId }
-          }
-        })
-      } catch (err) {
-        console.error("Prisma telemetry error:", err)
-      }
-    })()
+  ; (async () => {
+    try {
+      await trackAdEvent({
+        campaignId: claim.adId,
+        advertiser: claim.sponsor,
+        eventType: "claim",
+        sessionID,
+        walletAddress,
+        metadata: {
+          claimId,
+          dwellMs,
+          advertiserAddress: claim.advertiserAddress ?? null,
+        },
+      })
+    } catch (err) {
+      console.error("Prisma telemetry error:", err)
+    }
+  })()
 
 
   return c.json({
@@ -901,6 +919,130 @@ app.get("/analytics/public", async (c) => {
 })
 
 // ──────────────────────────────────────────────
+//  Admin API — Ad Management (protected by API key)
+// ──────────────────────────────────────────────
+
+app.use("/admin/*", async (c, next) => {
+  const key = c.req.header("x-admin-key")
+  if (!key || key !== (process.env.ADMIN_API_KEY || "adshell-admin")) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+  await next()
+})
+
+// List all ads (with stats)
+app.get("/admin/ads", async (c) => {
+  const ads = await prisma.ad.findMany({ orderBy: { createdAt: "desc" } })
+
+  const impressions = await prisma.adEvent.groupBy({
+    by: ["campaignId"],
+    _count: { id: true },
+    where: { eventType: "impression" },
+  })
+  const claimStats = await prisma.adEvent.groupBy({
+    by: ["campaignId"],
+    _count: { id: true },
+    where: { eventType: "claim" },
+  })
+
+  const impMap = new Map(impressions.map((i) => [i.campaignId, i._count.id]))
+  const claimMap = new Map(claimStats.map((i) => [i.campaignId, i._count.id]))
+
+  const result = ads.map((ad) => ({
+    ...ad,
+    stats: {
+      impressions: impMap.get(ad.id) || 0,
+      claims: claimMap.get(ad.id) || 0,
+    },
+  }))
+
+  return c.json(result)
+})
+
+// Create a new ad
+app.post("/admin/ads", async (c) => {
+  const body = await c.req.json<{
+    sponsor: string
+    title: string
+    lines: string[]
+    clickUrl?: string
+  }>()
+
+  if (!body.sponsor || !body.title || !body.lines?.length) {
+    return c.json({ error: "sponsor, title, and lines are required" }, 400)
+  }
+
+  const ad = await prisma.ad.create({
+    data: {
+      sponsor: body.sponsor,
+      title: body.title,
+      lines: body.lines,
+      clickUrl: body.clickUrl,
+    },
+  })
+
+  return c.json(ad, 201)
+})
+
+// Update an ad
+app.patch("/admin/ads/:id", async (c) => {
+  const id = c.req.param("id")
+  const body = await c.req.json<{
+    sponsor?: string
+    title?: string
+    lines?: string[]
+    clickUrl?: string
+    isActive?: boolean
+  }>()
+
+  try {
+    const ad = await prisma.ad.update({
+      where: { id },
+      data: {
+        ...(body.sponsor !== undefined && { sponsor: body.sponsor }),
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.lines !== undefined && { lines: body.lines }),
+        ...(body.clickUrl !== undefined && { clickUrl: body.clickUrl }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
+      },
+    })
+    return c.json(ad)
+  } catch {
+    return c.json({ error: "Ad not found" }, 404)
+  }
+})
+
+// Delete (soft-delete) an ad
+app.delete("/admin/ads/:id", async (c) => {
+  const id = c.req.param("id")
+  try {
+    await prisma.ad.update({ where: { id }, data: { isActive: false } })
+    return c.json({ ok: true })
+  } catch {
+    return c.json({ error: "Ad not found" }, 404)
+  }
+})
+
+// Get stats for a single ad
+app.get("/admin/ads/:id/stats", async (c) => {
+  const id = c.req.param("id")
+  const ad = await prisma.ad.findUnique({ where: { id } })
+  if (!ad) return c.json({ error: "Ad not found" }, 404)
+
+  const [impressions, claims] = await Promise.all([
+    prisma.adEvent.count({ where: { campaignId: id, eventType: "impression" } }),
+    prisma.adEvent.count({ where: { campaignId: id, eventType: "claim" } }),
+  ])
+
+  return c.json({
+    ad,
+    impressions,
+    claims,
+    claimRate: impressions > 0 ? ((claims / impressions) * 100).toFixed(2) + "%" : "0%",
+  })
+})
+
+// ──────────────────────────────────────────────
 //  Start
 // ──────────────────────────────────────────────
 
@@ -926,4 +1068,3 @@ if (useOnChainPool) {
   console.log(`  Pool:       http://127.0.0.1:${env.port}/pool/stats`)
 }
 console.log("")
-

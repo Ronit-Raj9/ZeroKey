@@ -17,6 +17,11 @@ Set `ADSHELL_ADPOOL_ADDRESS` (and optionally `ADSHELL_REGISTRY_ADDRESS`, `ADSHEL
 | `GET` | `/health` | Service status, balances, pool stats |
 | `GET` | `/ad/current` | Fetch an ad creative + claim token |
 | `POST` | `/ad/claim` | Validate impression + transfer USDC reward |
+| `GET` | `/admin/ads` | List admin-managed ads with impression/claim counts |
+| `POST` | `/admin/ads` | Create an admin-managed ad |
+| `PATCH` | `/admin/ads/:id` | Update an ad or toggle active status |
+| `DELETE` | `/admin/ads/:id` | Soft-delete an ad |
+| `GET` | `/admin/ads/:id/stats` | Fetch per-ad performance stats |
 | `POST` | `/v1/chat/completions` | x402-gated OpenAI-compatible AI endpoint |
 | `GET` | `/pool/stats` | On-chain AdPool analytics (on-chain mode only) |
 | `GET` | `/reputation/:address` | User/advertiser reputation score (on-chain mode only) |
@@ -25,6 +30,7 @@ Set `ADSHELL_ADPOOL_ADDRESS` (and optionally `ADSHELL_REGISTRY_ADDRESS`, `ADSHEL
 
 1. Copy `.env.example` to `.env`
 2. Fill in the sponsor wallet, pay-to wallet, and OpenAI key
+   Set `ADMIN_API_KEY` if you want something other than the default `adshell-admin` for the admin dashboard.
 3. Install dependencies:
 
 ```bash
