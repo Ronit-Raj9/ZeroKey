@@ -28,3 +28,14 @@ opencode-dev
 logs/
 *.bun-build
 tsconfig.tsbuildinfo
+
+# Foundry build artifacts
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# Env files
+.env
+.env.local
+adshell-proxy/.env

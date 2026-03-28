@@ -5,11 +5,14 @@ import { useDirectory } from "../../context/directory"
 import { useConnected } from "../../component/dialog-model"
 import { createStore } from "solid-js/store"
 import { useRoute } from "../../context/route"
+import { AdshellStateStore } from "@/adshell/state"
+import { useLocal } from "../../context/local"
 
 export function Footer() {
   const { theme } = useTheme()
   const sync = useSync()
   const route = useRoute()
+  const local = useLocal()
   const mcp = createMemo(() => Object.values(sync.data.mcp).filter((x) => x.status === "connected").length)
   const mcpError = createMemo(() => Object.values(sync.data.mcp).some((x) => x.status === "failed"))
   const lsp = createMemo(() => Object.keys(sync.data.lsp))
@@ -22,7 +25,27 @@ export function Footer() {
 
   const [store, setStore] = createStore({
     welcome: false,
+    adshellCredits: 0,
+    adshellRewardTx: undefined as string | undefined,
+    adshellPaymentTx: undefined as string | undefined,
+    adshellLifetimeImpressions: 0,
+    adshellLifetimeAICalls: 0,
+    adshellMode: undefined as string | undefined,
   })
+
+  const adshellActive = createMemo(
+    () =>
+      local.model.current()?.providerID === "adshell" ||
+      store.adshellCredits > 0 ||
+      !!store.adshellRewardTx ||
+      !!store.adshellPaymentTx,
+  )
+
+  const shortHash = (value?: string) => {
+    if (!value) return undefined
+    if (value.length <= 16) return value
+    return `${value.slice(0, 8)}...${value.slice(-6)}`
+  }
 
   onMount(() => {
     // Track all timeouts to ensure proper cleanup
@@ -49,6 +72,31 @@ export function Footer() {
     })
   })
 
+  onMount(() => {
+    let disposed = false
+
+    const refresh = async () => {
+      const state = await AdshellStateStore.get().catch(() => undefined)
+      if (!state || disposed) return
+      setStore("adshellCredits", state.creditCount)
+      setStore("adshellRewardTx", state.lastRewardTx)
+      setStore("adshellPaymentTx", state.lastPaymentTx)
+      setStore("adshellLifetimeImpressions", state.lifetimeImpressions)
+      setStore("adshellLifetimeAICalls", state.lifetimeAICalls)
+      setStore("adshellMode", state.mode)
+    }
+
+    void refresh()
+    const interval = setInterval(() => {
+      void refresh()
+    }, 2000)
+
+    onCleanup(() => {
+      disposed = true
+      clearInterval(interval)
+    })
+  })
+
   return (
     <box flexDirection="row" justifyContent="space-between" gap={1} flexShrink={0}>
       <text fg={theme.textMuted}>{directory()}</text>
@@ -60,6 +108,28 @@ export function Footer() {
             </text>
           </Match>
           <Match when={connected()}>
+            <Show when={adshellActive()}>
+              <text fg={theme.text}>
+                <span style={{ fg: store.adshellCredits > 0 ? theme.success : theme.warning }}>◈</span>{" "}
+                {store.adshellCredits} Credits
+              </text>
+              <Show when={store.adshellMode}>
+                <text fg={theme.textMuted}>
+                  [{store.adshellMode === "on-chain" ? "⛓ Pool" : "↔ Direct"}]
+                </text>
+              </Show>
+              <Show when={store.adshellRewardTx}>
+                <text fg={theme.textMuted}>↑ {shortHash(store.adshellRewardTx)}</text>
+              </Show>
+              <Show when={store.adshellPaymentTx}>
+                <text fg={theme.textMuted}>↓ {shortHash(store.adshellPaymentTx)}</text>
+              </Show>
+              <Show when={store.adshellLifetimeImpressions > 0}>
+                <text fg={theme.textMuted}>
+                  👁 {store.adshellLifetimeImpressions} | 🤖 {store.adshellLifetimeAICalls}
+                </text>
+              </Show>
+            </Show>
             <Show when={permissions().length > 0}>
               <text fg={theme.warning}>
                 <span style={{ fg: theme.warning }}>△</span> {permissions().length} Permission

@@ -1,0 +1,39 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model OpencodeInstallation {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  machineId      String    @unique @map("machine_id")
+  walletAddress  String?   @map("wallet_address")
+  metadata       Json?     @default("{}")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  events         AdEvent[]
+
+  @@map("opencode_installations")
+}
+
+model AdEvent {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  installationId String    @db.Uuid @map("installation_id")
+  campaignId     String    @map("campaign_id")
+  advertiser     String
+  eventType      String    @map("event_type") // e.g., 'impression', 'click', 'time_spent'
+  metadata       Json?     @default("{}")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  installation   OpencodeInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  @@map("ad_events")
+}

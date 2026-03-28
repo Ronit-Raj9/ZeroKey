@@ -1,9 +1,44 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "opencode": {
-      "options": {},
+    "adshell": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AdShell",
+      "options": {
+        "baseURL": "http://127.0.0.1:4021/v1",
+        "apiKey": "adshell-demo",
+        "headers": {
+          "x-adshell-client": "opencode"
+        },
+        "timeout": 300000,
+        "chunkTimeout": 30000
+      },
+      "models": {
+        "adshell-demo": {
+          "name": "AdShell Demo",
+          "id": "adshell-demo",
+          "limit": {
+            "context": 200000,
+            "output": 8192
+          },
+          "temperature": true,
+          "reasoning": false,
+          "attachment": true,
+          "tool_call": true,
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        }
+      }
     },
+    "opencode": {
+      "options": {}
+    }
   },
   "permission": {
     "edit": {

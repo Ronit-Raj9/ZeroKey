@@ -51,6 +51,7 @@ import { GoogleAuth } from "google-auth-library"
 import { ProviderTransform } from "./transform"
 import { Installation } from "../installation"
 import { ModelID, ProviderID } from "./schema"
+import { createAdshellFetch } from "@/adshell/fetch"
 
 export namespace Provider {
   const log = Log.create({ service: "provider" })
@@ -156,6 +157,17 @@ export namespace Provider {
         options: {
           headers: {
             "anthropic-beta": "interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
+          },
+        },
+      }
+    },
+    async adshell() {
+      return {
+        autoload: true,
+        options: {
+          fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+            const adshellFetch = await createAdshellFetch()
+            return adshellFetch(input, init)
           },
         },
       }

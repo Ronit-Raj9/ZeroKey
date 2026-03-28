@@ -35,6 +35,7 @@ import { useToast } from "../../ui/toast"
 import { useKV } from "../../context/kv"
 import { useTextareaKeybindings } from "../textarea-keybindings"
 import { DialogSkill } from "../dialog-skill"
+import { AdshellFlow } from "@/adshell/flow"
 
 export type PromptProps = {
   sessionID?: string
@@ -539,6 +540,19 @@ export function Prompt(props: PromptProps) {
         ))
       },
     },
+    {
+      title: "Watch sponsored ad",
+      value: "adshell.watch",
+      category: "Prompt",
+      onSelect: async (dialog) => {
+        dialog.clear()
+        await AdshellFlow.ensureCredit({
+          dialog,
+          toast,
+          sessionID: props.sessionID ?? crypto.randomUUID(),
+        })
+      },
+    },
   ])
 
   async function submit() {
@@ -574,6 +588,15 @@ export function Prompt(props: PromptProps) {
       }
 
       sessionID = res.data.id
+    }
+
+    if (selectedModel.providerID === "adshell") {
+      const ok = await AdshellFlow.ensureCredit({
+        dialog,
+        toast,
+        sessionID,
+      })
+      if (!ok) return
     }
 
     const messageID = MessageID.ascending()
