@@ -1,9 +1,9 @@
 import "dotenv/config"
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import { paymentMiddleware, x402ResourceServer } from "@x402/hono"
-import { ExactEvmScheme } from "@x402/evm/exact/server"
-import { HTTPFacilitatorClient } from "@x402/core/server"
+import { createThirdwebClient } from "thirdweb"
+import { facilitator, settlePayment } from "thirdweb/x402"
+import { monadTestnet } from "thirdweb/chains"
 import {
   defineChain,
   erc20Abi,
@@ -42,8 +42,9 @@ const env = {
   reputationAddress: process.env.ADSHELL_REPUTATION_ADDRESS || "",
 }
 
+if (!process.env.THIRDWEB_SECRET_KEY) console.warn("⚠ THIRDWEB_SECRET_KEY is not set")
 if (!env.sponsorPrivateKey) console.warn("⚠ ADSHELL_SPONSOR_PRIVATE_KEY is not set")
-if (!env.payTo) console.warn("⚠ ADSHELL_PAY_TO is not set")
+if (!env.payTo) console.warn("⚠ ADSHELL_PAY_TO must be a thirdweb server wallet address (create at thirdweb.com/dashboard → Wallets)")
 if (!env.openaiApiKey) console.warn("⚠ OPENAI_API_KEY is not set")
 
 const useOnChainPool = Boolean(env.adPoolAddress)
@@ -60,7 +61,7 @@ if (useOnChainPool) {
 //  Chain Config
 // ──────────────────────────────────────────────
 
-const monadTestnet = defineChain({
+const viemMonadTestnet = defineChain({
   id: 10143,
   name: "Monad Testnet",
   nativeCurrency: { decimals: 18, name: "Monad", symbol: "MON" },
@@ -75,14 +76,14 @@ const sponsorAccount = env.sponsorPrivateKey
   ? privateKeyToAccount(env.sponsorPrivateKey as `0x${string}`)
   : undefined
 const publicClient = createPublicClient({
-  chain: monadTestnet,
+  chain: viemMonadTestnet,
   transport: http(env.rpcUrl),
 })
 const sponsorClient =
   sponsorAccount &&
   createWalletClient({
     account: sponsorAccount,
-    chain: monadTestnet,
+    chain: viemMonadTestnet,
     transport: http(env.rpcUrl),
   })
 
@@ -198,14 +199,18 @@ const reputationAbi = [
 ] as const satisfies Abi
 
 // ──────────────────────────────────────────────
-//  x402 Setup
+//  Thirdweb x402 Setup
 // ──────────────────────────────────────────────
 
-const facilitatorClient = new HTTPFacilitatorClient({ url: env.facilitatorUrl })
-const resourceServer = new x402ResourceServer(facilitatorClient).register(
-  env.network,
-  new ExactEvmScheme(),
-)
+const thirdwebClient = createThirdwebClient({
+  secretKey: process.env.THIRDWEB_SECRET_KEY!,
+})
+
+const thirdwebX402Facilitator = facilitator({
+  client: thirdwebClient,
+  serverWalletAddress: env.payTo || sponsorAccount?.address || "",
+  waitUntil: "confirmed",
+})
 
 // ──────────────────────────────────────────────
 //  Fallback Ads (used when no on-chain registry)
@@ -285,49 +290,8 @@ setInterval(() => {
 
 const app = new Hono()
 
-const x402Middleware = paymentMiddleware(
-  {
-    "POST /v1/chat/completions": {
-      accepts: [
-        {
-          scheme: "exact",
-          price: {
-            amount: parseUnits(env.rewardUsdc, 6).toString(),
-            asset: env.usdcAddress,
-            extra: { name: "USD Coin", version: "2" },
-          },
-          network: env.network,
-          payTo:
-            env.payTo ||
-            sponsorAccount?.address ||
-            "0x0000000000000000000000000000000000000000",
-        },
-      ],
-      description: "AdShell AI chat completion",
-      mimeType: "text/event-stream",
-    },
-  },
-  resourceServer,
-)
-
-app.use("*", async (c, next) => {
-  try {
-    return await x402Middleware(c, next)
-
-  } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e)
-    console.error("x402 middleware error:", msg)
-    // If this is not the payment-gated route, skip the middleware
-    if (c.req.method !== "POST" || !c.req.path.endsWith("/v1/chat/completions")) {
-      return next()
-    }
-    return c.json(
-      { error: "Payment processing unavailable", detail: msg },
-      502,
-    )
-  }
-    
-})
+// CORS middleware
+app.use("*", cors())
 
 // ──────────────────────────────────────────────
 //  GET /health — Enhanced with on-chain stats
@@ -541,7 +505,7 @@ app.post("/ad/claim", async (c) => {
     try {
       hash = await sponsorClient.writeContract({
         account: sponsorAccount,
-        chain: monadTestnet,
+        chain: viemMonadTestnet,
         address: env.adPoolAddress as `0x${string}`,
         abi: adPoolAbi,
         functionName: "claimImpression",
@@ -554,7 +518,7 @@ app.post("/ad/claim", async (c) => {
         sponsorClient
           .writeContract({
             account: sponsorAccount,
-            chain: monadTestnet,
+            chain: viemMonadTestnet,
             address: env.reputationAddress as `0x${string}`,
             abi: reputationAbi,
             functionName: "recordClaim",
@@ -579,7 +543,7 @@ app.post("/ad/claim", async (c) => {
     // ═══ DIRECT-TRANSFER MODE (MVP): Simple USDC transfer ═══
     hash = await sponsorClient.writeContract({
       account: sponsorAccount,
-      chain: monadTestnet,
+      chain: viemMonadTestnet,
       address: env.usdcAddress as `0x${string}`,
       abi: erc20Abi,
       functionName: "transfer",
@@ -741,7 +705,7 @@ app.get("/reputation/:address", async (c) => {
 })
 
 // ──────────────────────────────────────────────
-//  POST /v1/chat/completions — x402-gated AI
+//  POST /v1/chat/completions — x402-gated AI (Thirdweb)
 // ──────────────────────────────────────────────
 
 app.post("/v1/chat/completions", async (c) => {
@@ -749,38 +713,100 @@ app.post("/v1/chat/completions", async (c) => {
     return c.json({ error: "OPENAI_API_KEY is not configured" }, 500)
   }
 
-  const body = await c.req.json<Record<string, unknown>>()
-  const upstreamBody = {
-    ...body,
-    model: env.upstreamModel,
-  }
+  try {
+    // x402 v1 sends "X-PAYMENT", v2 sends "PAYMENT-SIGNATURE" (Hono headers are case-insensitive)
+    const paymentData = c.req.header("x-payment") ?? c.req.header("payment-signature")
+    const requestUrl = new URL(c.req.url)
+    const resourceUrl = `${requestUrl.origin}/v1/chat/completions`
 
-  const upstream = await fetch(`${env.openaiBaseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.openaiApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(upstreamBody),
-  })
-
-  if (!upstream.ok || !upstream.body) {
-    const text = await upstream.text().catch(() => upstream.statusText)
-    return new Response(JSON.stringify({ error: text || "upstream request failed" }), {
-      status: upstream.status,
-      headers: { "content-type": "application/json" },
+    const result = await settlePayment({
+      resourceUrl,
+      method: "POST",
+      paymentData,
+      network: monadTestnet,
+      price: `$${env.rewardUsdc}`,
+      payTo: env.payTo || sponsorAccount?.address || "",
+      facilitator: thirdwebX402Facilitator,
     })
+
+    if (result.status !== 200) {
+      // Log settlement errors for debugging
+      const body = result.responseBody as Record<string, unknown> | undefined
+      if (body?.error || body?.errorMessage) {
+        console.error("[x402] Settlement failed:", body.error, "-", body.errorMessage)
+        if (body.fundWalletLink) console.error("[x402] Fund wallet:", body.fundWalletLink)
+      }
+      // Payment required or failed — return the 402 / error response
+      return new Response(
+        JSON.stringify(result.responseBody),
+        {
+          status: result.status,
+          headers: { "Content-Type": "application/json", ...(result.responseHeaders || {}) },
+        },
+      )
+    }
+
+    // Payment settled — forward to upstream AI
+    console.log("=== x402 Payment Settled ===")
+    console.log(JSON.stringify(result.paymentReceipt, null, 2))
+
+    const body = await c.req.json<Record<string, unknown>>()
+    const upstreamBody = {
+      ...body,
+      model: env.upstreamModel,
+    }
+
+    const upstream = await fetch(`${env.openaiBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.openaiApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(upstreamBody),
+    })
+
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text().catch(() => upstream.statusText)
+      return new Response(JSON.stringify({ error: text || "upstream request failed" }), {
+        status: upstream.status,
+        headers: { "content-type": "application/json" },
+      })
+    }
+
+    // Track AI call for analytics
+    analyticsCounters.totalAICalls++
+
+    // Record payment in reputation oracle (fire-and-forget)
+    if (env.reputationAddress && sponsorClient && sponsorAccount) {
+      const payer = (result.paymentReceipt as Record<string, unknown>)?.payer as string | undefined
+      if (payer) {
+        sponsorClient
+          .writeContract({
+            account: sponsorAccount,
+            chain: viemMonadTestnet,
+            address: env.reputationAddress as `0x${string}`,
+            abi: reputationAbi,
+            functionName: "recordPayment",
+            args: [payer as `0x${string}`],
+          })
+          .catch(() => { }) // Non-critical
+      }
+    }
+
+    const headers = new Headers(upstream.headers)
+    headers.set("content-type", headers.get("content-type") || "text/event-stream")
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers,
+    })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("x402 payment error:", msg)
+    return c.json(
+      { error: "Payment processing failed", detail: msg },
+      502,
+    )
   }
-
-  // Track AI call for analytics
-  analyticsCounters.totalAICalls++
-
-  const headers = new Headers(upstream.headers)
-  headers.set("content-type", headers.get("content-type") || "text/event-stream")
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers,
-  })
 })
 
 // ──────────────────────────────────────────────

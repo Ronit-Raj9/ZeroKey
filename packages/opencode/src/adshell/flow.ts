@@ -20,7 +20,7 @@ export namespace AdshellFlow {
     await ensureAdshellWallet()
 
     const current = await AdshellStateStore.get()
-    if (current.creditCount > 0) return true
+    if (current.creditCount >= 10) return true
 
     // Attempt to recover a pending claim (e.g. app crashed mid-claim)
     if (current.pendingClaimId) {
