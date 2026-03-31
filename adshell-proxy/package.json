@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "prisma:generate": "prisma generate",
-    "postinstall": "npm run prisma:generate",
-    "predev": "npm run prisma:generate",
-    "prestart": "npm run prisma:generate",
+    "postinstall": "bun run prisma:generate",
+    "prebuild": "bun run prisma:generate",
+    "build": "bun build ./src/index.ts --target bun --outdir dist",
+    "predev": "bun run prisma:generate",
+    "prestart": "bun run prisma:generate",
     "dev": "bun run src/index.ts",
     "start": "bun run src/index.ts"
   },

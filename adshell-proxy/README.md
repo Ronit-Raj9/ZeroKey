@@ -43,7 +43,13 @@ bun install
 bun run dev
 ```
 
-5. Test:
+5. Build the service:
+
+```bash
+bun run build
+```
+
+6. Test:
 
 ```bash
 curl http://localhost:4021/health
