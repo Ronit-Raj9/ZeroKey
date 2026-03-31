@@ -203,15 +203,20 @@ const reputationAbi = [
 //  Thirdweb x402 Setup
 // ──────────────────────────────────────────────
 
-const thirdwebClient = createThirdwebClient({
-  secretKey: process.env.THIRDWEB_SECRET_KEY!,
-})
+const thirdwebSecretKey = process.env.THIRDWEB_SECRET_KEY
+const thirdwebServerWalletAddress = env.payTo || sponsorAccount?.address || ""
+const thirdwebClient = thirdwebSecretKey
+  ? createThirdwebClient({ secretKey: thirdwebSecretKey })
+  : null
 
-const thirdwebX402Facilitator = facilitator({
-  client: thirdwebClient,
-  serverWalletAddress: env.payTo || sponsorAccount?.address || "",
-  waitUntil: "confirmed",
-})
+const thirdwebX402Facilitator =
+  thirdwebClient && thirdwebServerWalletAddress
+    ? facilitator({
+      client: thirdwebClient,
+      serverWalletAddress: thirdwebServerWalletAddress,
+      waitUntil: "confirmed",
+    })
+    : null
 
 // ──────────────────────────────────────────────
 //  DB-backed Ad Serving
@@ -730,6 +735,15 @@ app.post("/v1/chat/completions", async (c) => {
   if (!env.openaiApiKey) {
     return c.json({ error: "OPENAI_API_KEY is not configured" }, 500)
   }
+  if (!thirdwebX402Facilitator) {
+    return c.json(
+      {
+        error:
+          "x402 is not configured. Set THIRDWEB_SECRET_KEY and ADSHELL_PAY_TO (or ADSHELL_SPONSOR_PRIVATE_KEY).",
+      },
+      500,
+    )
+  }
 
   try {
     // x402 v1 sends "X-PAYMENT", v2 sends "PAYMENT-SIGNATURE" (Hono headers are case-insensitive)
@@ -1046,25 +1060,29 @@ app.get("/admin/ads/:id/stats", async (c) => {
 //  Start
 // ──────────────────────────────────────────────
 
-Bun.serve({
-  port: env.port,
-  fetch: app.fetch,
-})
+if (typeof Bun !== "undefined") {
+  Bun.serve({
+    port: env.port,
+    fetch: app.fetch,
+  })
 
-console.log("")
-console.log("╔═══════════════════════════════════════╗")
-console.log("║       AdShell Proxy v2.0              ║")
-console.log("╠═══════════════════════════════════════╣")
-console.log(`║  Port:     ${env.port}                       ║`)
-console.log(`║  Network:  ${env.network}            ║`)
-console.log(`║  Mode:     ${useOnChainPool ? "On-chain AdPool  " : "Direct Transfer  "}       ║`)
-console.log(`║  Model:    ${env.upstreamModel.padEnd(20)}    ║`)
-console.log("╚═══════════════════════════════════════╝")
-console.log("")
-console.log(`  Listening on http://127.0.0.1:${env.port}`)
-console.log(`  Health:     http://127.0.0.1:${env.port}/health`)
-console.log(`  Analytics:  http://127.0.0.1:${env.port}/analytics/public`)
-if (useOnChainPool) {
-  console.log(`  Pool:       http://127.0.0.1:${env.port}/pool/stats`)
+  console.log("")
+  console.log("╔═══════════════════════════════════════╗")
+  console.log("║       AdShell Proxy v2.0              ║")
+  console.log("╠═══════════════════════════════════════╣")
+  console.log(`║  Port:     ${env.port}                       ║`)
+  console.log(`║  Network:  ${env.network}            ║`)
+  console.log(`║  Mode:     ${useOnChainPool ? "On-chain AdPool  " : "Direct Transfer  "}       ║`)
+  console.log(`║  Model:    ${env.upstreamModel.padEnd(20)}    ║`)
+  console.log("╚═══════════════════════════════════════╝")
+  console.log("")
+  console.log(`  Listening on http://127.0.0.1:${env.port}`)
+  console.log(`  Health:     http://127.0.0.1:${env.port}/health`)
+  console.log(`  Analytics:  http://127.0.0.1:${env.port}/analytics/public`)
+  if (useOnChainPool) {
+    console.log(`  Pool:       http://127.0.0.1:${env.port}/pool/stats`)
+  }
+  console.log("")
 }
-console.log("")
+
+export default app
