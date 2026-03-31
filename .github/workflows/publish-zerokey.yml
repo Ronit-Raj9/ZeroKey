@@ -1,0 +1,72 @@
+name: publish-zerokey
+
+on:
+  push:
+    tags:
+      - 'zerokey-v*'
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Packages to publish (comma-separated: sdk,ui,umbrella)'
+        required: false
+        default: 'sdk,ui,umbrella'
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+        working-directory: ./zerokey
+
+      - name: Setup Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Build and publish @ronii/zerokey-sdk
+        if: contains(inputs.packages || 'sdk,ui,umbrella', 'sdk')
+        run: |
+          cd packages/sdk/js
+          bun run build || true
+          npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Build and publish @ronii/zerokey-ui
+        if: contains(inputs.packages || 'sdk,ui,umbrella', 'ui')
+        run: |
+          cd packages/ui
+          npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Build and publish @ronii/zerokey (umbrella)
+        if: contains(inputs.packages || 'sdk,ui,umbrella', 'umbrella')
+        run: |
+          cd packages/zerokey
+          bun run build
+          npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ZeroKey ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

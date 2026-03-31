@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@ronii/zerokey",
+  "version": "1.0.2",
+  "description": "ZeroKey — Complete AI development platform with AdShell proxy integration",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "zerokey": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./sdk": {
+      "types": "./dist/sdk.d.ts",
+      "import": "./dist/sdk.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun run script/build.ts",
+    "prepublishOnly": "bun run build && node ./dist/cli.js --help"
+  },
+  "dependencies": {
+    "@ronii/zerokey-sdk": "1.0.0",
+    "xdg-basedir": "5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "solid-js": "^1.9"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ronit-Raj9/ZeroKey"
+  },
+  "keywords": [
+    "zerokey",
+    "adshell",
+    "opencode",
+    "cli",
+    "sdk",
+    "ui",
+    "ai",
+    "developer-tools"
+  ],
+  "zerokey": {
+    "defaultProxy": "https://zerokey-8p3y.onrender.com"
+  }
+}

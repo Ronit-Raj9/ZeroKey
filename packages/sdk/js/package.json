@@ -1,9 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@opencode-ai/sdk",
-  "version": "1.3.3",
+  "name": "@ronii/zerokey-sdk",
+  "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "build": "bun ./script/build.ts"
@@ -18,8 +20,12 @@
     "./v2/server": "./src/v2/server.ts"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.90.10",
     "@tsconfig/node22": "catalog:",
