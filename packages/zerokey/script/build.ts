@@ -30,7 +30,7 @@ for (const { name, input } of entries) {
     console.log(`  Building ${name}...`)
 
     // Build JS
-    await $`bun build ${srcPath} --outdir ${dist} --target bun --external @ronii/zerokey-sdk --external @ronii/zerokey-ui --external xdg-basedir`
+    await $`bun build ${srcPath} --outdir ${dist} --target bun --external @opencode-ai/sdk --external @opencode-ai/ui --external xdg-basedir`
       .quiet()
 
     // Rename output to match entry name

@@ -2,7 +2,7 @@
  * @ronii/zerokey — Complete AI development platform
  *
  * This umbrella package re-exports:
- * - @ronii/zerokey-sdk — Client and server APIs
+ * - @opencode-ai/sdk — Client and server APIs
  *
  * @example
  * ```ts
@@ -19,12 +19,11 @@ export {
   type OpencodeClientConfig,
   type ServerOptions,
   type TuiOptions,
-} from '@ronii/zerokey-sdk'
+} from '@opencode-ai/sdk'
 
 // Re-export SDK types
 export type {
   Config,
-} from '@ronii/zerokey-sdk'
+} from '@opencode-ai/sdk'
 
-// CLI is available via bin
-// Run: npx @ronii/zerokey init
+// CLI: npx @ronii/zerokey init | start | chat | wallet

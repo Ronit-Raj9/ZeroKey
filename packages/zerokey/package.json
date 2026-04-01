@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@ronii/zerokey",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "ZeroKey — Complete AI development platform with AdShell proxy integration",
   "type": "module",
   "license": "MIT",
@@ -43,8 +43,12 @@
     "prepublishOnly": "bun run build && node ./dist/cli.js --help"
   },
   "dependencies": {
-    "@ronii/zerokey-sdk": "1.0.0",
+    "@opencode-ai/sdk": "workspace:*",
+    "viem": "^2.23.5",
     "xdg-basedir": "5.1.0"
+  },
+  "optionalDependencies": {
+    "@ronii/zerokey-runtime": "^1.0.6"
   },
   "devDependencies": {
     "@types/node": "^20",

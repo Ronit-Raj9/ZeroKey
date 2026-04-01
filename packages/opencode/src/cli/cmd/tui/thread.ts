@@ -66,7 +66,7 @@ async function input(value?: string) {
 
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
-  describe: "start opencode tui",
+  describe: "start ZeroKey tui",
   builder: (yargs) =>
     withNetworkOptions(yargs)
       .positional("project", {

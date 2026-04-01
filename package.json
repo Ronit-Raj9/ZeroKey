@@ -88,6 +88,8 @@
     "@opencode-ai/plugin": "workspace:*",
     "@opencode-ai/script": "workspace:*",
     "@opencode-ai/sdk": "workspace:*",
+    "@opentui/core": "0.1.90",
+    "@parcel/watcher": "2.5.1",
     "@supabase/supabase-js": "2.100.1",
     "typescript": "catalog:"
   },

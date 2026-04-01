@@ -50,7 +50,7 @@ process.on("uncaughtException", (e) => {
 
 const cli = yargs(hideBin(process.argv))
   .parserConfiguration({ "populate--": true })
-  .scriptName("opencode")
+  .scriptName("zerokey")
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -88,7 +88,7 @@ const cli = yargs(hideBin(process.argv))
     process.env.OPENCODE = "1"
     process.env.OPENCODE_PID = String(process.pid)
 
-    Log.Default.info("opencode", {
+    Log.Default.info("zerokey", {
       version: Installation.VERSION,
       args: process.argv.slice(2),
     })

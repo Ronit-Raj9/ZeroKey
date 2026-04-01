@@ -1,5 +1,5 @@
 /**
- * @ronii/zerokey/sdk — ZeroKey SDK exports
+ * @ronii/zerokey/sdk — re-exports @opencode-ai/sdk
  *
  * @example
  * ```ts
@@ -15,8 +15,8 @@ export {
   type OpencodeClientConfig,
   type ServerOptions,
   type TuiOptions,
-} from '@ronii/zerokey-sdk'
+} from '@opencode-ai/sdk'
 
 export type {
   Config,
-} from '@ronii/zerokey-sdk'
+} from '@opencode-ai/sdk'

@@ -10,7 +10,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
 
 function detectPlatformAndArch() {
-  // Map platform names
   let platform
   switch (os.platform()) {
     case "darwin":
@@ -27,7 +26,6 @@ function detectPlatformAndArch() {
       break
   }
 
-  // Map architecture names
   let arch
   switch (os.arch()) {
     case "x64":
@@ -49,35 +47,33 @@ function detectPlatformAndArch() {
 
 function findBinary() {
   const { platform, arch } = detectPlatformAndArch()
-  const packageName = `opencode-${platform}-${arch}`
-  const binaryName = platform === "windows" ? "opencode.exe" : "opencode"
+  const suffix = `zerokey-${platform}-${arch}`
+  const binaryName = platform === "windows" ? "zerokey.exe" : "zerokey"
 
-  try {
-    // Use require.resolve to find the package
-    const packageJsonPath = require.resolve(`${packageName}/package.json`)
-    const packageDir = path.dirname(packageJsonPath)
-    const binaryPath = path.join(packageDir, "bin", binaryName)
-
-    if (!fs.existsSync(binaryPath)) {
-      throw new Error(`Binary not found at ${binaryPath}`)
+  const tryResolve = (spec) => {
+    try {
+      const packageJsonPath = require.resolve(`${spec}/package.json`)
+      const packageDir = path.dirname(packageJsonPath)
+      const binaryPath = path.join(packageDir, "bin", binaryName)
+      if (fs.existsSync(binaryPath)) return { binaryPath, binaryName }
+    } catch {
+      // try next
     }
-
-    return { binaryPath, binaryName }
-  } catch (error) {
-    throw new Error(`Could not find package ${packageName}: ${error.message}`)
+    return null
   }
+
+  const scoped = `@ronii/${suffix}`
+  return tryResolve(scoped) ?? tryResolve(suffix)
 }
 
 function prepareBinDirectory(binaryName) {
   const binDir = path.join(__dirname, "bin")
   const targetPath = path.join(binDir, binaryName)
 
-  // Ensure bin directory exists
   if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true })
   }
 
-  // Remove existing binary/symlink if it exists
   if (fs.existsSync(targetPath)) {
     fs.unlinkSync(targetPath)
   }
@@ -85,31 +81,20 @@ function prepareBinDirectory(binaryName) {
   return { binDir, targetPath }
 }
 
-function symlinkBinary(sourcePath, binaryName) {
-  const { targetPath } = prepareBinDirectory(binaryName)
-
-  fs.symlinkSync(sourcePath, targetPath)
-  console.log(`opencode binary symlinked: ${targetPath} -> ${sourcePath}`)
-
-  // Verify the file exists after operation
-  if (!fs.existsSync(targetPath)) {
-    throw new Error(`Failed to symlink binary to ${targetPath}`)
-  }
-}
-
 async function main() {
   try {
     if (os.platform() === "win32") {
-      // On Windows, the .exe is already included in the package and bin field points to it
-      // No postinstall setup needed
-      console.log("Windows detected: binary setup not needed (using packaged .exe)")
+      console.log("Windows detected: using packaged zerokey.exe from optional dependency")
       return
     }
 
-    // On non-Windows platforms, just verify the binary package exists
-    // Don't replace the wrapper script - it handles binary execution
-    const { binaryPath } = findBinary()
-    const target = path.join(__dirname, "bin", ".opencode")
+    const found = findBinary()
+    if (!found) {
+      throw new Error("Could not resolve @ronii/zerokey-<platform>-<arch> optional package")
+    }
+
+    const { binaryPath } = found
+    const target = path.join(__dirname, "bin", ".zerokey")
     if (fs.existsSync(target)) fs.unlinkSync(target)
     try {
       fs.linkSync(binaryPath, target)
@@ -118,13 +103,13 @@ async function main() {
     }
     fs.chmodSync(target, 0o755)
   } catch (error) {
-    console.error("Failed to setup opencode binary:", error.message)
+    console.error("Failed to setup zerokey binary:", error.message)
     process.exit(1)
   }
 }
 
 try {
-  main()
+  await main()
 } catch (error) {
   console.error("Postinstall script error:", error.message)
   process.exit(0)

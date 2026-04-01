@@ -1,5 +1,5 @@
 /**
- * @ronii/zerokey/ui — ZeroKey UI components
+ * @ronii/zerokey/ui — re-exports @opencode-ai/ui
  *
  * @example
  * ```tsx
@@ -8,4 +8,4 @@
  */
 
 // Re-export all UI components and hooks
-export * from '@ronii/zerokey-ui'
+export * from '@opencode-ai/ui'

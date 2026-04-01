@@ -15,6 +15,10 @@ process.chdir(dir)
 import { Script } from "@opencode-ai/script"
 import pkg from "../package.json"
 
+/** Native CLI basename and dist folder prefix (published as @ronii/<artifact>-<os>-<arch>). */
+const ARTIFACT = "zerokey"
+const NPM_SCOPE = "@ronii"
+
 const modelsUrl = process.env.OPENCODE_MODELS_URL || "https://models.dev"
 // Fetch and generate models.dev snapshot
 const modelsData = process.env.MODELS_DEV_API_JSON
@@ -177,14 +181,17 @@ const targets = singleFlag
 
 await $`rm -rf dist`
 
+/** Monorepo root (…/zerokey) — required so `bun install` resolves `workspace:*` deps. */
+const repoRoot = path.resolve(dir, "..", "..")
+
 const binaries: Record<string, string> = {}
 if (!skipInstall) {
-  await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
-  await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
+  await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`.cwd(repoRoot)
+  await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`.cwd(repoRoot)
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
+    ARTIFACT,
     // changing to win32 flags npm for some reason
     item.os === "win32" ? "windows" : item.os,
     item.arch,
@@ -204,6 +211,7 @@ for (const item of targets) {
   // Use platform-specific bunfs root path based on target OS
   const bunfsRoot = item.os === "win32" ? "B:/~BUN/root/" : "/$bunfs/root/"
   const workerRelativePath = path.relative(dir, parserWorker).replaceAll("\\", "/")
+  const nativeBinName = item.os === "win32" ? "zerokey.exe" : "zerokey"
 
   await Bun.build({
     conditions: ["browser"],
@@ -214,9 +222,9 @@ for (const item of targets) {
       autoloadDotenv: false,
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
-      outfile: `dist/${name}/bin/opencode`,
-      execArgv: [`--user-agent=opencode/${Script.version}`, "--use-system-ca", "--"],
+      target: name.replace(ARTIFACT, "bun") as any,
+      outfile: `dist/${name}/bin/${nativeBinName}`,
+      execArgv: [`--user-agent=zerokey/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
     },
     files: {
@@ -235,7 +243,7 @@ for (const item of targets) {
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/opencode`
+    const binaryPath = `dist/${name}/bin/${nativeBinName}`
     console.log(`Running smoke test: ${binaryPath} --version`)
     try {
       const versionOutput = await $`${binaryPath} --version`.text()
@@ -250,7 +258,7 @@ for (const item of targets) {
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
       {
-        name,
+        name: `${NPM_SCOPE}/${name}`,
         version: Script.version,
         os: [item.os],
         cpu: [item.arch],

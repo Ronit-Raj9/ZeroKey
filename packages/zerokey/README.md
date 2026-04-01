@@ -17,18 +17,25 @@ That's it! No need to install additional packages.
 
 ## Quick Start
 
-### 1. Initialize CLI (Optional)
+### 1. Initialize and run the terminal UI
 
-Configure OpenCode to use the hosted AdShell proxy:
+Write global OpenCode-compatible config so the AdShell provider points at your proxy:
 
 ```bash
 npx @ronii/zerokey init
+npx @ronii/zerokey init --proxy https://your-proxy.example.com
 ```
 
-Or with a custom proxy URL:
+Launch the **ZeroKey TUI** (native binary installed via optional `@ronii/zerokey-runtime`):
 
 ```bash
-npx @ronii/zerokey init --proxy https://your-proxy.example.com
+npx @ronii/zerokey start
+```
+
+Quick **chat** (bundled viem wallet, no TUI):
+
+```bash
+npx @ronii/zerokey chat
 ```
 
 ### 2. Use the SDK
@@ -42,7 +49,7 @@ const client = createClient({
   apiKey: 'your-api-key'
 })
 
-// Create server (spawns local opencode server)
+// Create server (spawns local zerokey CLI — set ZEROKEY_BIN if not on PATH)
 const { client, server } = await createOpencode({
   port: 4096,
   hostname: '127.0.0.1'
@@ -67,7 +74,8 @@ function App() {
 
 | Package | Description |
 |---------|-------------|
-| `@ronii/zerokey` | Umbrella package (recommended) |
+| `@ronii/zerokey` | Umbrella package: JS CLI + SDK/UI re-exports |
+| `@ronii/zerokey-runtime` | Optional meta-package: native `zerokey` binaries per OS (published from `zerokey/packages/opencode`) |
 | `@ronii/zerokey-sdk` | Client/server APIs (included in umbrella) |
 | `@ronii/zerokey-ui` | UI components (included in umbrella) |
 
@@ -91,7 +99,10 @@ import { ChatPanel } from '@ronii/zerokey/ui'
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ZEROKEY_PROXY_URL` | Custom proxy URL | `https://zerokey-8p3y.onrender.com` |
+| `ZEROKEY_PROXY_URL` | Custom proxy URL for `init` / chat | From `package.json` → `zerokey.defaultProxy` |
+| `ZEROKEY_BIN_PATH` | Absolute path to native TUI binary | _(optional package resolution)_ |
+| `ZEROKEY_BIN` | CLI name or path for SDK `createOpencode*` spawns | `zerokey` |
+| `OPENCODE_BIN` | Same as `ZEROKEY_BIN` (compat) | `zerokey` |
 
 ## Requirements
 
@@ -101,17 +112,13 @@ import { ChatPanel } from '@ronii/zerokey/ui'
 
 ## Publishing (Maintainers)
 
-Packages are published via GitHub Actions:
+1. **Native runtime** — From `zerokey/packages/opencode`: run `bun run build` (or `--single` for current OS), then `bun run verify-dist`, then `bun run script/publish.ts` (publishes each `@ronii/zerokey-<platform>-<arch>` and the meta-package `@ronii/zerokey-runtime`).
+2. **SDK / UI / umbrella** — Publish `@ronii/zerokey-sdk`, `@ronii/zerokey-ui`, then `@ronii/zerokey`. Bump `optionalDependencies.@ronii/zerokey-runtime` on the umbrella to match the published runtime version.
 
 ```bash
-# Tag a new release
-git tag zerokey-v1.0.0
-git push origin zerokey-v1.0.0
+cd zerokey/packages/opencode && bun run build && bun run verify-dist
+# then publish native tarballs + @ronii/zerokey-runtime (see script/publish.ts)
 ```
-
-Or manually via GitHub Actions UI with package selection.
-
-Publish order: sdk → ui → umbrella
 
 ## Links
 
