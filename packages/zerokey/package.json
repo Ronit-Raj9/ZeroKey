@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@ronii/zerokey",
-  "version": "1.0.6",
+  "version": "0.0.0-dev-202604010528",
   "description": "ZeroKey — Complete AI development platform with AdShell proxy integration",
   "type": "module",
   "license": "MIT",

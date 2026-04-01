@@ -49,6 +49,116 @@ No MetaMask. No external wallet. No setup.
 
 ---
 
+## Quick Start (Local, Full Stack)
+
+If you want to run the full ZeroKey stack locally (contracts + proxy + admin + CLI), follow this order.
+
+### 1) Prerequisites
+
+- Bun `>=1.3`
+- Node.js `>=20` (recommended for admin app compatibility)
+- Foundry (`forge`, `cast`) for smart contracts
+- A PostgreSQL database (for admin telemetry)
+- Monad testnet RPC access (`https://testnet-rpc.monad.xyz`)
+- USDC + MON on Monad testnet for deployer/sponsor wallets
+
+### 2) Clone and install dependencies
+
+```bash
+git clone https://github.com/Ronit-Raj9/ZeroKey
+cd ZeroKey/zerokey
+bun install
+```
+
+### 3) Deploy smart contracts (optional for MVP, required for on-chain mode)
+
+```bash
+cd contracts
+forge build
+forge test
+
+export DEPLOYER_PRIVATE_KEY=0x...
+export ADSHELL_CLAIMER_ADDRESS=0x...   # proxy/sponsor wallet
+./deploy.sh
+```
+
+Save the deployed addresses for:
+- `AdPool`
+- `AdRegistry`
+- `RevenueDistributor`
+- `ReputationOracle`
+
+### 4) Run AdShell proxy
+
+```bash
+cd ../adshell-proxy
+cp .env.example .env
+```
+
+Set at minimum in `.env`:
+- `OPENAI_API_KEY`
+- `ADMIN_API_KEY`
+- `ADSHELL_PAY_TO_ADDRESS`
+- `MONAD_RPC_URL=https://testnet-rpc.monad.xyz`
+
+For on-chain mode, also set:
+- `ADSHELL_ADPOOL_ADDRESS`
+- `ADSHELL_REGISTRY_ADDRESS`
+- `ADSHELL_REPUTATION_ADDRESS`
+
+Then start:
+
+```bash
+bun install
+bun run dev
+```
+
+### 5) Run admin dashboard (optional but recommended)
+
+```bash
+cd ../admin
+cp env.example .env.local
+```
+
+Set required values in `.env.local`:
+- `DATABASE_URL` (and optional `DIRECT_URL`)
+- `NEXT_PUBLIC_MONAD_RPC`
+- `NEXT_PUBLIC_PROXY_URL=http://localhost:4021`
+- `NEXT_PUBLIC_ADPOOL_ADDRESS`
+- `NEXT_PUBLIC_ADREGISTRY_ADDRESS`
+- `NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS`
+- `NEXT_PUBLIC_REPUTATION_ADDRESS`
+
+Start admin:
+
+```bash
+bun install
+bun dev
+```
+
+### 6) Run CLI
+
+```bash
+cd ../packages/opencode
+bun run dev
+```
+
+Or install globally and run:
+
+```bash
+npm i -g @ronii/zerokey
+zerokey
+```
+
+### 7) Smoke test checklist
+
+- Proxy health: `curl http://localhost:4021/health`
+- Ad fetch: `curl "http://localhost:4021/ad/current?wallet=0x1234&session=test"`
+- Admin opens at `http://localhost:3000`
+- CLI shows sponsor ad, then allows AI call
+
+---
+
 ## Features
 
 - **Bundled Wallet** — Auto-generated on first run via viem, stored locally
@@ -172,6 +282,63 @@ cd adshell-proxy && bun run dev
 # Run CLI
 cd packages/opencode && bun run dev
 ```
+
+---
+
+## Smart Contracts (Monad)
+
+ZeroKey uses four Solidity contracts in `contracts/`:
+
+| Contract | Responsibility | Key Methods |
+|---|---|---|
+| `AdPool.sol` | Escrow and payout of advertiser USDC | `deposit()`, `withdraw()`, `claimImpression()` |
+| `AdRegistry.sol` | On-chain ad creative registry/moderation | `submitCreative()`, `approveCreative()`, `getAsciiArt()` |
+| `RevenueDistributor.sol` | x402 payment split routing | `distribute()`, `distributeAll()`, `updateSplits()` |
+| `ReputationOracle.sol` | Fraud and trust scoring | `recordClaim()`, `flagUser()`, `userScore()` |
+
+### Contract flow
+
+1. Advertiser deposits USDC into `AdPool`.
+2. User watches an ad; proxy verifies dwell and calls `claimImpression()`.
+3. User receives credit and makes AI call through x402 path.
+4. Payments route through `RevenueDistributor` using configured split rules.
+5. Proxy updates `ReputationOracle` for anti-fraud scoring/throttling.
+
+### Build and test
+
+```bash
+cd contracts
+forge build
+forge test
+```
+
+### Deploy to Monad testnet
+
+```bash
+cd contracts
+export DEPLOYER_PRIVATE_KEY=0x...
+export ADSHELL_CLAIMER_ADDRESS=0x...
+
+forge script script/Deploy.s.sol:Deploy \
+  --rpc-url https://testnet-rpc.monad.xyz \
+  --private-key $DEPLOYER_PRIVATE_KEY \
+  --broadcast
+```
+
+### Wire deployed addresses into apps
+
+- `adshell-proxy/.env`:
+  - `ADSHELL_ADPOOL_ADDRESS`
+  - `ADSHELL_REGISTRY_ADDRESS`
+  - `ADSHELL_REPUTATION_ADDRESS`
+  - `ADSHELL_PAY_TO_ADDRESS` (typically `RevenueDistributor`)
+- `admin/.env.local`:
+  - `NEXT_PUBLIC_ADPOOL_ADDRESS`
+  - `NEXT_PUBLIC_ADREGISTRY_ADDRESS`
+  - `NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS`
+  - `NEXT_PUBLIC_REPUTATION_ADDRESS`
+
+For deeper contract docs, see `contracts/README.md`.
 
 ---
 

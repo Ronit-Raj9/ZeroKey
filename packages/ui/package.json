@@ -1,6 +1,6 @@
 {
   "name": "@opencode-ai/ui",
-  "version": "1.0.3",
+  "version": "0.0.0-dev-202604010528",
   "type": "module",
   "license": "MIT",
   "main": "./src/components/index.tsx",
